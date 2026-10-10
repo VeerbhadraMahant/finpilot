@@ -340,6 +340,16 @@ export const api = {
   },
   importOcr: (userId: string, transactions: OcrTxn[]) =>
     apiFetch<{ imported: number; skipped_repeats: number }>(`/api/ocr/import/${userId}`, { method: "POST", body: JSON.stringify({ transactions }) }).finally(clearApiCache),
+  // One line of spending (item + amount); the backend files it under a category
+  addExpense: async (userId: string, item: string, amount: number) => {
+    const body = new FormData();
+    body.append("item", item);
+    body.append("amount", String(amount));
+    const res = await fetch(`${API_URL}/api/expenses/${userId}`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
+    return res.json();
+  },
   deleteDocument: (userId: string, id: string) =>
     apiFetch<unknown>(`/api/documents/${userId}/${id}`, { method: "DELETE" }),
 

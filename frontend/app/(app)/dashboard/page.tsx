@@ -23,7 +23,8 @@ import { SpendByCategoryBars } from "@/components/dashboard/SpendByCategoryBars"
 import { MoneySummary } from "@/components/dashboard/MoneySummary";
 import { InvestGuide } from "@/components/dashboard/InvestGuide";
 import { SimpleHome } from "@/components/dashboard/SimpleHome";
-import { useSimpleMode } from "@/lib/simple";
+import { useAnalystMode, useSimpleMode } from "@/lib/simple";
+import { AnalystPanel } from "@/components/dashboard/AnalystPanel";
 import { useT } from "@/lib/i18n";
 import { RoleSpotlight } from "@/components/dashboard/RoleSpotlight";
 import { PromoCard } from "@/components/dashboard/PromoCard";
@@ -62,6 +63,7 @@ export default function DashboardPage() {
   const userId = useUserId();
   const { t } = useT();
   const [simple, setSimple] = useSimpleMode(userId);
+  const [analyst, setAnalyst] = useAnalystMode(userId);
   const profile = useAsync(useCallback(() => api.profile(userId), [userId]), [userId]);
   const fetchDashboard = useCallback(() => api.dashboard(userId), [userId]);
   const { data, error, loading, reload } = useAsync(fetchDashboard, [userId]);
@@ -133,7 +135,7 @@ export default function DashboardPage() {
 
   const connected = data.has_data;
   if (simple) {
-    return <SimpleHome name={profile.data?.answers.name} income={data.monthly_income} spent={data.monthly_expenses} connected={connected} onFullView={() => setSimple(false)} />;
+    return <SimpleHome name={profile.data?.answers.name} income={data.monthly_income} spent={data.monthly_expenses} connected={connected} onFullView={() => setSimple(false)} onSaved={reload} />;
   }
   const months = spend.months;
   const topCategory = spend.categories[0]?.label;
@@ -160,6 +162,9 @@ export default function DashboardPage() {
           <Button variant="ghost" size="sm" onClick={() => setSimple(true)}>
             {t("dash.simple_view")}
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setAnalyst(!analyst)}>
+            {analyst ? "Standard view" : "Analyst view"}
+          </Button>
           <Button variant="ghost" size="sm" onClick={reload}>
             <RefreshCw />
             Refresh
@@ -178,6 +183,8 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
+
+      {analyst && connected && <AnalystPanel data={data} spend={spend} />}
 
       {!connected && (
         <div className="relative overflow-hidden rounded-card bg-sage p-5 text-ink shadow-sm sm:p-6">
