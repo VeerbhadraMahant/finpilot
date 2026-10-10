@@ -18,6 +18,8 @@ import type { MultiFactorResolver, User } from "firebase/auth";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { FinPilotLogo } from "@/components/FinPilotLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useT } from "@/lib/i18n";
 
 function GoogleIcon() {
   return (
@@ -32,6 +34,7 @@ function GoogleIcon() {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useT();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -144,14 +147,15 @@ export default function LoginPage() {
       </div>
 
       {/* Form panel */}
-      <div className="flex items-center justify-center p-6">
+      <div className="relative flex items-center justify-center p-6">
+        <LanguageSwitcher className="absolute right-4 top-4" />
         <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)]">
           <div className="space-y-2">
             <Link href="/" className="inline-block lg:hidden">
               <FinPilotLogo variant="horizontal" size={32} showWordmark={true} />
             </Link>
             <h1 className="font-display text-3xl font-semibold text-ink">
-              {currentUser ? "You are signed in" : isSignUp ? "Create your account" : "Welcome back"}
+              {currentUser ? "You are signed in" : isSignUp ? t("login.create") : t("login.welcome")}
             </h1>
             <p className="text-sm text-graphite">
               {currentUser ? (
@@ -168,7 +172,7 @@ export default function LoginPage() {
                     }}
                     className="font-medium text-sky hover:underline"
                   >
-                    {isSignUp ? "Sign in" : "Sign up"}
+                    {isSignUp ? t("login.signin") : t("login.signup")}
                   </button>
                 </>
               )}
@@ -220,7 +224,7 @@ export default function LoginPage() {
               <form onSubmit={handleEmailAuth} className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium text-ink">
-                    Email address
+                    {t("login.email")}
                   </label>
                   <Input
                     id="email"
@@ -234,7 +238,7 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium text-ink">
-                    Password
+                    {t("login.password")}
                   </label>
                   <div className="relative">
                     <Input
@@ -269,13 +273,13 @@ export default function LoginPage() {
                 )}
 
                 <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                  {loading ? "Authenticating..." : isSignUp ? "Create account" : "Sign in"}
+                  {loading ? "..." : isSignUp ? t("login.create_btn") : t("login.signin")}
                 </Button>
               </form>
 
               <div className="relative flex items-center justify-center">
                 <span className="h-px w-full bg-mist" />
-                <span className="absolute bg-white px-2.5 text-xs text-pewter">or</span>
+                <span className="absolute bg-white px-2.5 text-xs text-pewter">{t("login.or")}</span>
               </div>
 
               <Button
@@ -287,7 +291,7 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 <GoogleIcon />
-                Continue with Google
+                {t("login.google")}
               </Button>
             </>
           )}

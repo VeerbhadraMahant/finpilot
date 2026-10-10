@@ -7,6 +7,7 @@ try the other model.
 from __future__ import annotations
 
 import json
+import os
 
 import httpx
 
@@ -17,6 +18,7 @@ URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 def complete_json(system: str, user: str) -> dict:
     s = get_settings()
+    timeout = 12 if os.getenv("VERCEL") else 45
     r = httpx.post(
         URL,
         headers={"Authorization": f"Bearer {s.nvidia_api_key}"},
@@ -28,7 +30,7 @@ def complete_json(system: str, user: str) -> dict:
             "max_tokens": 3500,
             "chat_template_kwargs": {"enable_thinking": False},
         },
-        timeout=60,
+        timeout=timeout,
     )
     if r.status_code >= 400:
         raise RuntimeError(f"NVIDIA {r.status_code}: {r.text[:300]}")
@@ -38,12 +40,13 @@ def complete_json(system: str, user: str) -> dict:
 def chat(message: str, history: list[tuple[str, str]], system: str) -> str:
     """Plain conversation on the fast model (no data, no thinking)."""
     s = get_settings()
+    timeout = 12 if os.getenv("VERCEL") else 45
     msgs = [{"role": "system", "content": system}] + [{"role": r, "content": c} for r, c in history[-8:]] + [{"role": "user", "content": message}]
     r = httpx.post(
         URL,
         headers={"Authorization": f"Bearer {s.nvidia_chat_api_key}"},
         json={"model": s.nvidia_chat_model, "messages": msgs, "temperature": 0.7, "max_tokens": 1200, "chat_template_kwargs": {"enable_thinking": False}},
-        timeout=45,
+        timeout=timeout,
     )
     if r.status_code >= 400:
         raise RuntimeError(f"NVIDIA {r.status_code}: {r.text[:300]}")

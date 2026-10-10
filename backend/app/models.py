@@ -267,3 +267,16 @@ class ProfileRow(SQLModel, table=True):
     answers: str = "{}"  # JSON-serialized {question_id: answer}
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+class PriceMemoryRow(SQLModel, table=True):
+    """One saved quick expense: what it was, what it cost, and the photo embedding used to recognise it again."""
+
+    __tablename__ = "price_memory"
+
+    id: str = Field(default_factory=_uuid, primary_key=True)
+    user_id: str = Field(index=True)
+    item: str = Field(index=True)
+    price: float
+    category: str = "other"
+    embedding: str | None = None  # JSON-serialized list of floats (CLIP image vector)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

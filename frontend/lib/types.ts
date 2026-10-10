@@ -727,7 +727,7 @@ export type ConnectProfile = "priya" | "arjun" | "meera";
 
 // Security suite
 export type ProfileLevel = "basic" | "standard" | "deep";
-export interface ProfileQuestion { id: string; label: string; type: "text" | "number" | "choice"; options: string[]; hint: string }
+export interface ProfileQuestion { id: string; label: string; type: "text" | "number" | "choice"; options: string[]; hint: string; when?: { id: string; equals: string } | null }
 export interface Profile { completed: boolean; level: ProfileLevel | "skipped" | null; answers: Record<string, string> }
 
 export interface FinancialSecurity {
@@ -789,3 +789,23 @@ export interface SecurityGraph {
 export interface DataSource { id: string; name: string; detail: string | null; records: number; preview: unknown[]; disconnectable: boolean }
 export interface AccessEntry { when: string; event: string; method: string; path: string; detail: string; status: number }
 export interface MyData { sources: DataSource[]; access_log: AccessEntry[] }
+
+export interface OcrTxn { date: string; description: string; amount: number }
+export interface OcrPreview { transactions: OcrTxn[]; removed: Record<string, number> }
+
+export interface TaughtItem { item: string; price: number; category: string; has_photo: boolean }
+export interface PhotoSuggestion { item: string | null; price: number | null; category: string; source: string }
+export type SnapResult =
+  | { added: true; id: string; item: string; amount: number; category: string }
+  | { added: false; suggestion: PhotoSuggestion };
+
+export type CouncilVote = { agent: string; name: string; score: number; level: string; why: string; do: string; source: "model" | "rules"; round: number };
+export type CouncilVerdict = {
+  type: "verdict"; cached: boolean; score: number; level: string; counts: Record<string, number>; votes: CouncilVote[];
+  dissent: { agent: string; name: string; level: string; why: string }[]; actions: string[]; anchor: number; tokens: number; debated: boolean;
+};
+export type CouncilEvent =
+  | { type: "facts"; facts: Record<string, unknown>; approx_tokens: number }
+  | { type: "vote"; vote: CouncilVote }
+  | { type: "debate"; median: number; agents: string[] }
+  | CouncilVerdict;

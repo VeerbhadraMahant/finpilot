@@ -54,7 +54,19 @@ def verify_firebase_token(token: str) -> dict:
 verify_token = verify_firebase_token
 
 
+def _demo_ready(user_id: str) -> None:
+    if user_id in DEMO_USER_IDS:
+        from app.ingest.seed import ensure_demo_seeded  # lazy: seed pulls in models and analytics
+
+        ensure_demo_seeded()
+
+
 async def resolve_user_id(user_id: str, authorization: str | None = Header(default=None)) -> str:
+    _demo_ready(user_id)
+    return await _resolve_user_id(user_id, authorization)
+
+
+async def _resolve_user_id(user_id: str, authorization: str | None) -> str:
     """FastAPI dependency: the single seam every route uses to turn a raw
     path-param `user_id` into a trusted one.
 

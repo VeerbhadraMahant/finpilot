@@ -406,14 +406,14 @@ function SubscriptionPicker({
               onClick={() => onSelect(o.group_id)}
               className={cn(
                 "flex min-h-11 items-center justify-between p-3.5 rounded-chip border text-left transition-all cursor-pointer",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2",
                 isSelected
-                  ? "border-ember bg-orange-50/30 ring-1 ring-ember"
+                  ? "border-navy bg-navy/5 ring-1 ring-navy"
                   : "border-black/[0.08] bg-white hover:bg-fog"
               )}
             >
               <div className="flex items-center gap-2.5">
-                <span className="h-2 w-2 rounded-full bg-ember" />
+                <span className={cn("h-2 w-2 rounded-full", isSelected ? "bg-navy" : "bg-steel")} />
                 <span className="text-sm font-semibold text-ink">{o.merchant}</span>
               </div>
               <span className="text-xs font-bold text-ink tnum">
@@ -427,13 +427,13 @@ function SubscriptionPicker({
           <button
             type="button"
             onClick={() => onSelect(selected)}
-            className="flex min-h-11 items-center justify-between p-3.5 rounded-chip border border-ember bg-orange-50/30 ring-1 ring-ember text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2"
+            className="flex min-h-11 items-center justify-between p-3.5 rounded-chip border border-navy bg-navy/5 ring-1 ring-navy text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2"
           >
             <div className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-ember" />
+              <span className="h-2 w-2 rounded-full bg-navy" />
               <span className="text-sm font-semibold text-ink">Target Subscription</span>
             </div>
-            <span className="text-[10px] font-bold text-ember uppercase">Selected ({selected})</span>
+            <span className="text-[10px] font-bold text-navy uppercase">Selected ({selected})</span>
           </button>
         )}
       </div>

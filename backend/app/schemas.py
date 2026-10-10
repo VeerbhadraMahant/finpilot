@@ -392,6 +392,8 @@ class ChatRequest(BaseModel):
     # FinPilot engine preference: auto | deep | fast | alt (brand names, never the vendor model)
     model: str = "auto"
     history: list[HistoryTurn] = Field(default_factory=list)  # earlier turns of this chat, oldest first
+    language: str = "en"  # en hi mr bn ur kn ml
+    simple: bool = False  # plain, friendly talk for users who read little
 
 
 ChatRole = Literal["user", "assistant"]

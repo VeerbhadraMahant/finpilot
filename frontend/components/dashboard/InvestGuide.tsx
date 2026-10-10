@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { Check, ExternalLink, PiggyBank, ShieldCheck, TrendingUp, Landmark, type LucideIcon } from "lucide-react";
@@ -32,6 +33,7 @@ const SPLITS: Record<Risk, Record<string, number>> = {
 };
 
 function Step({ icon: Icon, title, body, state }: { icon: LucideIcon; title: string; body: string; state: "done" | "now" | "next" }) {
+  const { t } = useT();
   return (
     <li className={cn("flex gap-3 rounded-2xl p-3", state === "now" ? "bg-tint-lime ring-1 ring-lime-dark/50" : "bg-fog/60")}>
       <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", state === "done" ? "bg-leaf text-white" : state === "now" ? "bg-lime text-ink" : "bg-white text-pewter")}>
@@ -39,7 +41,7 @@ function Step({ icon: Icon, title, body, state }: { icon: LucideIcon; title: str
       </span>
       <div className="min-w-0">
         <p className="text-sm font-semibold text-ink">
-          {title} {state === "now" && <span className="ml-1 rounded-full bg-lime px-2 py-0.5 text-[10px] font-semibold uppercase">Do this now</span>}
+          {title} {state === "now" && <span className="ml-1 rounded-full bg-lime px-2 py-0.5 text-[10px] font-semibold uppercase">{t("g.now")}</span>}
         </p>
         <p className="text-xs text-graphite">{body}</p>
       </div>
@@ -49,6 +51,7 @@ function Step({ icon: Icon, title, body, state }: { icon: LucideIcon; title: str
 
 /** Recomputed from live dashboard numbers on every refresh: debt first, then emergency fund, then a SIP split. */
 export function InvestGuide({ userId, income, expenses, debts }: { userId: string; income: number; expenses: number; debts: Debt[] }) {
+  const { t } = useT();
   const [risk, setRisk] = useState<Risk>("balanced");
   const fetchAccounts = useCallback(() => api.accounts(userId), [userId]);
   const { data: accounts } = useAsync(fetchAccounts, [userId]);
@@ -75,10 +78,10 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
           <span className="flex size-8 items-center justify-center rounded-full bg-lime">
             <TrendingUp className="size-4" />
           </span>
-          What should I invest in?
+          {t("g.title")}
         </CardTitle>
         <CardDescription>
-          Updates with your income, spending, cash and debts. Surplus now: <b className="text-ink">{formatCurrency(plan.surplus)}</b> a month.
+          {t("g.desc")} <b className="text-ink">{formatCurrency(plan.surplus)}</b> {t("g.a_month")}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-5 lg:grid-cols-2">
@@ -86,20 +89,20 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
           <Step
             icon={Landmark}
             state={state(0)}
-            title="Clear costly debt"
-            body={plan.costlyOwed > 0 ? `${formatCurrency(plan.costlyOwed)} is borrowed at ${plan.worst.toFixed(1)}% or more. Paying it back is a guaranteed return.` : `No debt above ${HIGH_APR}% APR.`}
+            title={t("g.s1")}
+            body={plan.costlyOwed > 0 ? t("g.s1_yes").replace("{amt}", formatCurrency(plan.costlyOwed)).replace("{apr}", plan.worst.toFixed(1)) : t("g.s1_no").replace("{apr}", String(HIGH_APR))}
           />
           <Step
             icon={ShieldCheck}
             state={state(1)}
-            title={`Build a ${EMERGENCY_MONTHS}-month safety fund`}
-            body={`Cash covers ${plan.monthsCovered.toFixed(1)} months. ${plan.emergencyGap > 0 ? `${formatCurrency(plan.emergencyGap)} more reaches ${formatCurrency(plan.target)}. Keep it in a savings account or liquid fund.` : "Target reached."}`}
+            title={t("g.s2").replace("{n}", String(EMERGENCY_MONTHS))}
+            body={`${t("g.s2_cov").replace("{m}", plan.monthsCovered.toFixed(1))} ${plan.emergencyGap > 0 ? t("g.s2_gap").replace("{gap}", formatCurrency(plan.emergencyGap)).replace("{target}", formatCurrency(plan.target)) : t("g.s2_done")}`}
           />
           <Step
             icon={PiggyBank}
             state={state(2)}
-            title="Invest the surplus monthly"
-            body={plan.surplus > 0 ? "Start a SIP with the split on the right. Small and regular beats large and rare." : "No monthly surplus yet, so trim spending first."}
+            title={t("g.s3")}
+            body={plan.surplus > 0 ? t("g.s3_yes") : t("g.s3_no")}
           />
           <li className="mt-1 flex flex-wrap gap-2 text-xs">
             {[
@@ -117,7 +120,7 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
           <div className="flex gap-1 rounded-full bg-fog p-1 text-xs font-medium">
             {(["cautious", "balanced", "growth"] as Risk[]).map((r) => (
               <button key={r} type="button" onClick={() => setRisk(r)} className={cn("flex-1 rounded-full py-1.5 capitalize transition", risk === r ? "bg-lime text-ink shadow-sm" : "text-graphite hover:bg-white")}>
-                {r}
+                {t("g." + r)}
               </button>
             ))}
           </div>
@@ -133,7 +136,7 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[10px] text-pewter">per month</span>
+                <span className="text-[10px] text-pewter">{t("d.per_month")}</span>
                 <span className="font-display text-sm font-semibold tnum text-ink">{formatCurrency(plan.surplus)}</span>
               </div>
             </div>
@@ -142,7 +145,7 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
                 <li key={b.key} className="flex items-center justify-between gap-2">
                   <a href={b.link.href} target="_blank" rel="noopener noreferrer" title={b.link.label} className="flex min-w-0 items-center gap-2 text-graphite hover:text-ink">
                     <i className="size-2.5 shrink-0 rounded-full" style={{ background: b.color }} />
-                    <span className="truncate underline-offset-2 hover:underline">{b.label}</span>
+                    <span className="truncate underline-offset-2 hover:underline">{t("g.fund." + b.key, b.label)}</span>
                     <ExternalLink className="size-3 shrink-0 text-pewter" />
                   </a>
                   <span className="font-semibold tnum text-ink">{b.pct}% · {formatCurrency(b.amount)}</span>
@@ -151,7 +154,7 @@ export function InvestGuide({ userId, income, expenses, debts }: { userId: strin
             </ul>
           </div>
           <p className="text-[11px] leading-snug text-pewter">
-            An illustrative starting split from general rules of thumb, not personal advice. Check fund details and fees on the platform, and consider a SEBI-registered adviser for your situation.
+            {t("g.disc")}
           </p>
         </div>
       </CardContent>

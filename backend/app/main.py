@@ -21,6 +21,9 @@ from app.api.plan_router import router as plan_router
 from app.api.routes import router
 from app.api.rules_router import router as rules_router
 from app.api.security_router import router as security_router
+from app.api.expenses_router import router as expenses_router
+from app.api.ocr_router import router as ocr_router
+from app.api.webhooks_router import router as webhooks_router
 from app.api.tax_router import router as tax_router
 from app.api.transactions_router import router as transactions_router
 from app.core.audit import log_audit_event
@@ -30,11 +33,19 @@ _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    if os.getenv("VERCEL"):
-        # Firestore may be empty on a fresh deploy -- seed the demo personas if missing.
-        from app.ingest.seed import seed_if_empty
+    # Seed + warm the demo personas on every start (fresh deploy, serverless cold start, local emulator), without blocking boot.
+    def _prepare_demo() -> None:
+        try:
+            from app.ingest.seed import seed_if_empty
 
-        seed_if_empty()
+            seed_if_empty()
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("Demo persona seeding skipped: %s", exc)
+
+    import threading
+
+    threading.Thread(target=_prepare_demo, daemon=True).start()
     yield
 
 
@@ -68,6 +79,7 @@ app.include_router(copilot_feed_router, prefix="/api")
 app.include_router(connectors_router)
 app.include_router(goals_router)
 app.include_router(documents_router)
+app.include_router(ocr_router)
 app.include_router(household_router)
 app.include_router(networth_router)
 app.include_router(notifications_router)
@@ -76,6 +88,8 @@ app.include_router(aa_router)
 app.include_router(tax_router)
 app.include_router(rules_router)
 app.include_router(security_router)
+app.include_router(expenses_router, prefix="/api")
+app.include_router(webhooks_router, prefix="/api")
 
 
 @app.middleware("http")

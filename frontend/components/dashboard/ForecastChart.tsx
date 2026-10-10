@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import {
   Bar,
   BarChart,
@@ -41,6 +42,7 @@ function CustomForecastTooltip({
   payload,
   compareLabel = "Baseline",
 }: CustomTooltipProps) {
+  const { t } = useT();
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0]?.payload;
@@ -50,21 +52,21 @@ function CustomForecastTooltip({
     <div className="rounded-chip border border-black/[0.1] bg-white/95 p-3.5 shadow-xl backdrop-blur-md text-xs flex flex-col gap-2 min-w-[200px]">
       <div className="flex items-center justify-between border-b border-black/[0.06] pb-1.5">
         <span className="font-semibold text-ink">{formatDate(data.date)}</span>
-        <span className="text-[10px] text-pewter uppercase font-medium">Trajectory</span>
+        <span className="text-[10px] text-pewter uppercase font-medium">{t("f.trajectory")}</span>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-1.5 text-graphite">
             <span className="h-2 w-2 rounded-full bg-lime" />
-            <span>P50 Expected</span>
+            <span>{t("f.p50")}</span>
           </span>
           <span className="font-bold text-ink tnum">{formatCurrency(data.p50)}</span>
         </div>
 
         {data.band && (
           <div className="flex items-center justify-between gap-3 text-pewter">
-            <span>P10 - P90 Band</span>
+            <span>{t("f.band")}</span>
             <span className="tnum font-medium text-graphite">
               {formatCurrency(data.band[0])} - {formatCurrency(data.band[1])}
             </span>
@@ -122,6 +124,7 @@ export function ForecastChart({
     });
   }
 
+  const { t } = useT();
   const hasShortfall = Boolean(forecast.first_gap_date);
   const confidencePercent = Math.round(
     forecast.confidence <= 1
@@ -149,13 +152,13 @@ export function ForecastChart({
               )}
             />
             {hasShortfall
-              ? `Deficit projected around ${formatDate(forecast.first_gap_date!)}`
-              : "No Cash Shortfall Projected (90 Days)"}
+              ? `${t("f.deficit")} ${formatDate(forecast.first_gap_date!)}`
+              : t("f.noshort")}
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-pewter">Forecast Confidence:</span>
+          <span className="text-pewter">{t("f.conf")}</span>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-fog border border-black/[0.06] font-semibold text-ink tnum">
             {confidencePercent}%
           </span>
@@ -286,11 +289,11 @@ export function ForecastChart({
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className="h-0.5 w-4 bg-[#5f7f0c] rounded-full" />
-            <span className="text-graphite font-medium">P50 Expected</span>
+            <span className="text-graphite font-medium">{t("f.p50")}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-4 bg-black/[0.08] rounded-sm" />
-            <span>P10–P90 Range</span>
+            <span>{t("f.range")}</span>
           </span>
           {compareForecast && (
             <span className="flex items-center gap-1.5">
@@ -299,7 +302,7 @@ export function ForecastChart({
             </span>
           )}
         </div>
-        <span>Calculated from real transaction volatility</span>
+        <span>{t("f.calc")}</span>
       </div>
     </div>
   );

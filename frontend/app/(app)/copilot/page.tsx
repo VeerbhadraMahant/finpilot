@@ -11,6 +11,7 @@ import { DocumentsPanel } from "@/components/copilot/DocumentsPanel";
 import { api } from "@/lib/api";
 import { newChatId, titleFrom, useChats, type Turn } from "@/lib/chats";
 import { useAsync, useUserId } from "@/lib/hooks";
+import { onAuthChange } from "@/lib/firebase/auth";
 import { getOfflineOnly, setOfflineOnly } from "@/lib/user";
 import type { AnswerContract, ChatEngine } from "@/lib/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/shadcn/dropdown-menu";
@@ -45,6 +46,15 @@ export default function CopilotPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signedInName, setSignedInName] = useState<string | null>(null);
+  useEffect(
+    () =>
+      onAuthChange((u) => {
+        const first = u?.displayName?.split(" ")[0] || u?.email?.split("@")[0];
+        setSignedInName(first ? first.replace(/^./, (c) => c.toUpperCase()) : null);
+      }),
+    [],
+  );
   const [engine, setEngine] = useState<ChatEngine>("auto");
   const [railOpen, setRailOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -122,7 +132,7 @@ export default function CopilotPage() {
   }
 
   const empty = turns.length === 0 && !loading && !error;
-  const persona = userId.replace("demo-", "").replace(/^./, (c) => c.toUpperCase());
+  const persona = signedInName ?? (userId.startsWith("demo-") ? userId.slice(5).replace(/^./, (c) => c.toUpperCase()) : "there");
   const today = new Date().toDateString();
   const groups = useMemo(
     () => [

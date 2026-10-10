@@ -1,3 +1,5 @@
+import { getLang, getSimpleNow } from "@/lib/i18n";
+
 import type {
   Account,
   AnswerContract,
@@ -15,6 +17,10 @@ import type {
   CreateInviteRequest,
   DashboardSnapshot,
   DocumentInfo,
+  OcrPreview,
+  SnapResult,
+  TaughtItem,
+  OcrTxn,
   Goal,
   GoalProgress,
   FinancialSecurity,
@@ -52,6 +58,7 @@ import type {
   UpdateBudgetRequest,
   UpdateGoalRequest,
   SecurityEvent,
+  CouncilEvent,
   SecurityFinding,
   SecurityGraph,
   SecurityReport,
@@ -163,7 +170,7 @@ export const api = {
   chat: (message: string, userId: string, model: ChatEngine = "auto", history: { role: "user" | "assistant"; content: string }[] = []) =>
     apiFetch<AnswerContract>("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ message, user_id: userId, force_offline: getOfflineOnly(), model, history }),
+      body: JSON.stringify({ message, user_id: userId, force_offline: getOfflineOnly(), model, history, language: getLang(), simple: getSimpleNow() }),
     }),
   schemes: () => apiFetch<SchemesFeed>("/api/schemes"),
   simulate: (userId: string, req: SimulationRequest) =>
@@ -275,6 +282,22 @@ export const api = {
       lines.filter(Boolean).forEach((l) => onEvent(JSON.parse(l)));
     }
   },
+  /** Streams the Risk Council: one event per agent vote, then the verdict. */
+  convene: async (userId: string, onEvent: (e: CouncilEvent) => void) => {
+    const res = await fetch(`${API_URL}/api/security/${userId}/council`, { method: "POST", headers: await authHeader() });
+    if (!res.ok || !res.body) throw new Error(`Council failed: ${res.status}`);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      lines.filter(Boolean).forEach((l) => onEvent(JSON.parse(l)));
+    }
+  },
   profileQuestions: () => apiFetch<Record<ProfileLevel, ProfileQuestion[]>>("/api/profile/questions"),
   profile: (userId: string) => apiFetch<Profile>(`/api/profile/${userId}`),
   saveProfile: (userId: string, level: ProfileLevel | "skipped", answers: Record<string, string> = {}) =>
@@ -326,6 +349,48 @@ export const api = {
     if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
     return res.json();
   },
+  // Statement / passbook photo -> OCR -> personal data removed -> preview; nothing is saved until importOcr
+  extractStatement: async (userId: string, file: File): Promise<OcrPreview> => {
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch(`${API_URL}/api/ocr/extract/${userId}`, { method: "POST", headers: await authHeader(), body });
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Upload failed: ${res.status}`);
+    return res.json();
+  },
+  importOcr: (userId: string, transactions: OcrTxn[]) =>
+    apiFetch<{ imported: number; skipped_repeats: number }>(`/api/ocr/import/${userId}`, { method: "POST", body: JSON.stringify({ transactions }) }).finally(clearApiCache),
+  // One line of spending (item + amount); the backend files it under a category
+  addExpense: async (userId: string, item: string, amount: number, photo?: File) => {
+    const body = new FormData();
+    body.append("item", item);
+    body.append("amount", String(amount));
+    if (photo) body.append("photo", photo);
+    const res = await fetch(`${API_URL}/api/expenses/${userId}`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
+    return res.json();
+  },
+  // Photo -> price memory: teach once (photo + name + price), then a photo alone books the expense
+  teachItem: async (userId: string, item: string, price: number, photo: File) => {
+    const body = new FormData();
+    body.append("item", item);
+    body.append("price", String(price));
+    body.append("photo", photo);
+    const res = await fetch(`${API_URL}/api/expenses/${userId}/teach`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
+    return res.json() as Promise<{ item: string; price: number }>;
+  },
+  snapPhoto: async (userId: string, photo: File): Promise<SnapResult> => {
+    const body = new FormData();
+    body.append("photo", photo);
+    const res = await fetch(`${API_URL}/api/expenses/${userId}/snap`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not read that photo: ${res.status}`);
+    return res.json();
+  },
+  taughtItems: (userId: string) => apiFetch<TaughtItem[]>(`/api/expenses/${userId}/items`),
+  forgetItem: (userId: string, item: string) => apiFetch<unknown>(`/api/expenses/${userId}/items/${encodeURIComponent(item)}`, { method: "DELETE" }).finally(clearApiCache),
   deleteDocument: (userId: string, id: string) =>
     apiFetch<unknown>(`/api/documents/${userId}/${id}`, { method: "DELETE" }),
 
