@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   ReceiptText,
+  Camera,
   ScanText,
   Wallet,
   Target,
@@ -65,6 +66,7 @@ export const NAV_GROUPS: { label: string; tone: string; links: NavLink[] }[] = [
       { href: "/connect", label: "Connectors", icon: Link2 },
       { href: "/transactions", label: "Transactions", icon: ReceiptText },
       { href: "/upload", label: "Upload document", icon: ScanText },
+      { href: "/photos", label: "Photo prices", icon: Camera },
       { href: "/invoices", label: "Invoices", icon: FilePlus2 },
       { href: "/budgets", label: "Budgets", icon: Wallet },
       { href: "/goals", label: "Goals", icon: Target },

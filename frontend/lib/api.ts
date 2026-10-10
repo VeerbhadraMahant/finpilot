@@ -18,6 +18,8 @@ import type {
   DashboardSnapshot,
   DocumentInfo,
   OcrPreview,
+  SnapResult,
+  TaughtItem,
   OcrTxn,
   Goal,
   GoalProgress,
@@ -341,15 +343,37 @@ export const api = {
   importOcr: (userId: string, transactions: OcrTxn[]) =>
     apiFetch<{ imported: number; skipped_repeats: number }>(`/api/ocr/import/${userId}`, { method: "POST", body: JSON.stringify({ transactions }) }).finally(clearApiCache),
   // One line of spending (item + amount); the backend files it under a category
-  addExpense: async (userId: string, item: string, amount: number) => {
+  addExpense: async (userId: string, item: string, amount: number, photo?: File) => {
     const body = new FormData();
     body.append("item", item);
     body.append("amount", String(amount));
+    if (photo) body.append("photo", photo);
     const res = await fetch(`${API_URL}/api/expenses/${userId}`, { method: "POST", headers: await authHeader(), body });
     clearApiCache();
     if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
     return res.json();
   },
+  // Photo -> price memory: teach once (photo + name + price), then a photo alone books the expense
+  teachItem: async (userId: string, item: string, price: number, photo: File) => {
+    const body = new FormData();
+    body.append("item", item);
+    body.append("price", String(price));
+    body.append("photo", photo);
+    const res = await fetch(`${API_URL}/api/expenses/${userId}/teach`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
+    return res.json() as Promise<{ item: string; price: number }>;
+  },
+  snapPhoto: async (userId: string, photo: File): Promise<SnapResult> => {
+    const body = new FormData();
+    body.append("photo", photo);
+    const res = await fetch(`${API_URL}/api/expenses/${userId}/snap`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not read that photo: ${res.status}`);
+    return res.json();
+  },
+  taughtItems: (userId: string) => apiFetch<TaughtItem[]>(`/api/expenses/${userId}/items`),
+  forgetItem: (userId: string, item: string) => apiFetch<unknown>(`/api/expenses/${userId}/items/${encodeURIComponent(item)}`, { method: "DELETE" }).finally(clearApiCache),
   deleteDocument: (userId: string, id: string) =>
     apiFetch<unknown>(`/api/documents/${userId}/${id}`, { method: "DELETE" }),
 

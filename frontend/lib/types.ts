@@ -792,3 +792,9 @@ export interface MyData { sources: DataSource[]; access_log: AccessEntry[] }
 
 export interface OcrTxn { date: string; description: string; amount: number }
 export interface OcrPreview { transactions: OcrTxn[]; removed: Record<string, number> }
+
+export interface TaughtItem { item: string; price: number; category: string; has_photo: boolean }
+export interface PhotoSuggestion { item: string | null; price: number | null; category: string; source: string }
+export type SnapResult =
+  | { added: true; id: string; item: string; amount: number; category: string }
+  | { added: false; suggestion: PhotoSuggestion };

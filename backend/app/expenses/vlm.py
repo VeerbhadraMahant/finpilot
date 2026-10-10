@@ -14,17 +14,40 @@ from app.core.config import get_settings
 
 log = logging.getLogger("finpilot.vlm")
 _URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent"
 
 
 def _ask(image: bytes, prompt: str) -> str | None:
+    """Gemini when GEMINI_API_KEY is set (falling back to NVIDIA if it fails), else NVIDIA, else None."""
     s = get_settings()
-    if not s.nvidia_vision_api_key:
+    if not (s.gemini_api_key or s.nvidia_vision_api_key):
         return None
     try:
         img = Image.open(io.BytesIO(image)).convert("RGB")
         img.thumbnail((1280, 1280))  # smaller upload, fewer tokens
         buf = io.BytesIO()
         img.save(buf, "JPEG", quality=85)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("vision model failed: %s", exc)
+        return None
+    if s.gemini_api_key:
+        try:
+            r = httpx.post(
+                _GEMINI.format(s.gemini_model),
+                headers={"x-goog-api-key": s.gemini_api_key},
+                timeout=40,
+                json={"contents": [{"parts": [
+                    {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}},
+                    {"text": prompt}]}],
+                    "generationConfig": {"temperature": 0, "maxOutputTokens": 120}},
+            )
+            r.raise_for_status()
+            return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception as exc:  # noqa: BLE001 - overloaded or bad key: fall through to NVIDIA
+            log.warning("gemini failed: %s", exc)
+    if not s.nvidia_vision_api_key:
+        return None
+    try:
         r = httpx.post(
             _URL,
             headers={"Authorization": f"Bearer {s.nvidia_vision_api_key}"},
@@ -50,6 +73,14 @@ def read_bill(image: bytes) -> dict:
         return {"merchant": d.get("merchant") or None, "total": total if total and total > 0 else None}
     except (AttributeError, ValueError, TypeError):
         return {"merchant": None, "total": None}
+
+
+def match_item(image: bytes, names: list[str]) -> str | None:
+    """Which of the user's taught items is in this photo? One of `names`, or None."""
+    if not names:
+        return None
+    out = (_ask(image, "The photo shows one everyday item. Which of these is it: " + ", ".join(names) + ". Reply with exactly one name from the list, or NONE if it is not any of them.") or "").strip().strip(".\"'").lower()
+    return next((n for n in names if n.lower() == out), None)
 
 
 def name_item(image: bytes) -> str | None:

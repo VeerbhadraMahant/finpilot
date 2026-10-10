@@ -123,3 +123,46 @@ def test_vision_model_names_an_item_clip_cannot(uid, monkeypatch):
     monkeypatch.setattr(er.vlm, "name_item", named)
     s = _suggest(uid, photo=b"blurry cup")
     assert (s["item"], s["source"]) == ("tea", "estimate")
+
+
+def _teach(uid, item, price, photo):
+    return client.post(f"/api/expenses/{uid}/teach", data={"item": item, "price": price}, files={"photo": ("p.jpg", photo, "image/jpeg")})
+
+
+def _snap(uid, photo):
+    r = client.post(f"/api/expenses/{uid}/snap", files={"photo": ("p.jpg", photo, "image/jpeg")})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_teach_links_photo_to_price_without_booking_anything(uid):
+    assert _teach(uid, "tea", 15, b"cup-1").status_code == 200
+    assert store.query(TransactionRow, user_id=uid) == []
+    assert client.get(f"/api/expenses/{uid}/items").json()[0]["item"] == "tea"
+
+
+def test_snap_of_a_taught_photo_books_it_at_the_taught_price(uid):
+    _teach(uid, "tea", 15, b"cup-1")
+    out = _snap(uid, b"cup-1")
+    assert (out["added"], out["item"], out["amount"]) == (True, "tea", 15)
+    assert [t.amount for t in store.query(TransactionRow, user_id=uid)] == [-15]
+
+
+def test_snap_of_a_new_photo_of_a_taught_item_is_matched_by_the_vision_model(uid, monkeypatch):
+    _teach(uid, "tea", 15, b"cup-1")
+    monkeypatch.setattr("app.api.expenses_router.vlm.match_item", lambda image, names: "tea" if "tea" in names else None)
+    out = _snap(uid, b"another-cup")
+    assert (out["added"], out["amount"]) == (True, 15)
+
+
+def test_snap_of_an_untaught_photo_only_suggests(uid, monkeypatch):
+    monkeypatch.setattr("app.api.expenses_router.vlm.match_item", lambda image, names: None)
+    out = _snap(uid, b"mystery")
+    assert out["added"] is False and "suggestion" in out
+    assert store.query(TransactionRow, user_id=uid) == []
+
+
+def test_forget_removes_a_taught_item(uid):
+    _teach(uid, "tea", 15, b"cup-1")
+    client.delete(f"/api/expenses/{uid}/items/tea")
+    assert client.get(f"/api/expenses/{uid}/items").json() == []

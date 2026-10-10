@@ -27,6 +27,8 @@ class Settings:
     # NVIDIA hosted vision model (reads bills, names items in photos). Falls back to the main NVIDIA key.
     nvidia_vision_api_key: str = os.getenv("NVIDIA_VISION_API_KEY") or os.getenv("NVIDIA_API_KEY", "")
     nvidia_vision_model: str = os.getenv("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-vision-instruct")
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")  # preferred for photo recognition when set
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     nvidia_embed_model: str = os.getenv("NVIDIA_EMBED_MODEL", "nvidia/nemotron-3-embed-1b")  # 2048-dim; verified live
     firecrawl_api_key: str = os.getenv("FIRECRAWL_API_KEY", "")
 

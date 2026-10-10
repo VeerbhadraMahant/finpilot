@@ -35,6 +35,7 @@ Firebase Console → Project settings → **Your apps** → web app config. Put 
 | `NVIDIA_API_KEY` | backend, Vercel | A free key from **build.nvidia.com**. This turns on the real AI answers. |
 | `NVIDIA_CHAT_API_KEY` | backend | Optional second key for the chat model. |
 | `NVIDIA_VISION_API_KEY`, `NVIDIA_VISION_MODEL` | backend | Optional. Key and model for reading bills and naming items in photos (defaults to `NVIDIA_API_KEY` and a hosted Llama 3.2 vision model). |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | backend | Optional. When set, photo recognition (Photo prices tab, bills) uses Gemini first and falls back to the NVIDIA vision model. Model defaults to `gemini-3.1-flash-lite`. |
 | `NVIDIA_MODEL`, `NVIDIA_CHAT_MODEL`, `NVIDIA_EMBED_MODEL` | backend | Optional model overrides. Sensible defaults are built in. |
 | `NUGEN_API_KEY`, `NUGEN_MODEL` | backend | Optional. Second-opinion model. |
 | `FIRECRAWL_API_KEY` | backend | Optional. Enables live web search for questions that need current facts. |
