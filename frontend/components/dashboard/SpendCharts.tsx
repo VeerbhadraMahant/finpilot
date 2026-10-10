@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import {
   Bar,
@@ -34,16 +35,17 @@ function Empty({ children }: { children: string }) {
 }
 
 export function CategoryDonut({ summary }: { summary: SpendSummary }) {
+  const { t } = useT();
   const top = summary.categories.filter((c) => c.total > 0).slice(0, 7);
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="font-display text-lg">Where your money went</CardTitle>
-        <CardDescription>Spending by category this month</CardDescription>
+        <CardTitle className="font-display text-lg">{t("sc.where")}</CardTitle>
+        <CardDescription>{t("sc.cat_this")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center">
         {top.length === 0 ? (
-          <Empty>No spending recorded this month.</Empty>
+          <Empty>{t("sc.none")}</Empty>
         ) : (
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
             <div className="relative h-56 w-56 shrink-0">
@@ -58,7 +60,7 @@ export function CategoryDonut({ summary }: { summary: SpendSummary }) {
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-pewter">Spent</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-pewter">{t("d.spent")}</span>
                 <span className="font-display text-base font-bold tnum text-ink">{formatCurrency(summary.totalSpend)}</span>
               </div>
             </div>
@@ -66,7 +68,7 @@ export function CategoryDonut({ summary }: { summary: SpendSummary }) {
               {top.map((c) => (
                 <li key={c.category} className="flex items-center gap-2.5 text-sm">
                   <span className="size-3 shrink-0 rounded-full" style={{ background: c.color }} />
-                  <span className="flex-1 truncate text-graphite">{c.label}</span>
+                  <span className="flex-1 truncate text-graphite">{t("cat." + c.label, c.label)}</span>
                   <span className="font-semibold tnum text-ink">{formatCurrency(c.total)}</span>
                   <span className="w-10 text-right text-xs tnum text-pewter">
                     {Math.round((c.total / summary.totalSpend) * 100)}%
@@ -82,15 +84,16 @@ export function CategoryDonut({ summary }: { summary: SpendSummary }) {
 }
 
 export function IncomeVsSpend({ summary }: { summary: SpendSummary }) {
+  const { t } = useT();
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="font-display text-lg">Money in vs. money out</CardTitle>
-        <CardDescription>Last {summary.months.length} months</CardDescription>
+        <CardTitle className="font-display text-lg">{t("sc.inout")}</CardTitle>
+        <CardDescription>{t("sc.last").replace("{n}", String(summary.months.length))}</CardDescription>
       </CardHeader>
       <CardContent>
         {summary.months.length === 0 ? (
-          <Empty>Not enough history yet.</Empty>
+          <Empty>{t("sc.history")}</Empty>
         ) : (
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
@@ -100,7 +103,7 @@ export function IncomeVsSpend({ summary }: { summary: SpendSummary }) {
                 <YAxis tickLine={false} axisLine={false} tickFormatter={compact} tick={{ fontSize: 11, fill: "var(--color-pewter)" }} width={52} />
                 <Tooltip
                   cursor={{ fill: "rgba(20,33,61,0.05)" }}
-                  formatter={(v, name) => [formatCurrency(Number(v)), name === "income" ? "Income" : "Spent"]}
+                  formatter={(v, name) => [formatCurrency(Number(v)), name === "income" ? t("cat.Income") : t("d.spent")]}
                   contentStyle={TOOLTIP_STYLE}
                 />
                 <Bar dataKey="income" fill="#12a56b" radius={[8, 8, 0, 0]} maxBarSize={22} />
@@ -110,8 +113,8 @@ export function IncomeVsSpend({ summary }: { summary: SpendSummary }) {
           </div>
         )}
         <div className="mt-2 flex gap-4 text-xs text-graphite">
-          <span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-leaf" /> Income</span>
-          <span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-ember" /> Spent</span>
+          <span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-leaf" /> {t("cat.Income")}</span>
+          <span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-ember" /> {t("d.spent")}</span>
         </div>
       </CardContent>
     </Card>
@@ -119,17 +122,18 @@ export function IncomeVsSpend({ summary }: { summary: SpendSummary }) {
 }
 
 export function TopMerchants({ summary }: { summary: SpendSummary }) {
+  const { t } = useT();
   const max = summary.merchants[0]?.total ?? 1;
   const colors = ["#ff7a2f", "#2f7cf6", "#12a56b", "#ffc24b", "#8b5cf6", "#f0647e"];
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="font-display text-lg">Top merchants</CardTitle>
-        <CardDescription>Biggest spend this month</CardDescription>
+        <CardTitle className="font-display text-lg">{t("sc.top")}</CardTitle>
+        <CardDescription>{t("sc.top_d")}</CardDescription>
       </CardHeader>
       <CardContent>
         {summary.merchants.length === 0 ? (
-          <Empty>No merchants yet.</Empty>
+          <Empty>{t("sc.nomer")}</Empty>
         ) : (
           <ul className="grid gap-3.5">
             {summary.merchants.map((m, i) => (
@@ -154,6 +158,7 @@ export function TopMerchants({ summary }: { summary: SpendSummary }) {
 }
 
 export function SpendingShifts({ summary }: { summary: SpendSummary }) {
+  const { t } = useT();
   const shifts = summary.categories
     .filter((c) => c.change !== null && Math.abs(c.change) >= 10 && Math.max(c.total, c.prev) > 0)
     .sort((a, b) => Math.abs(b.total - b.prev) - Math.abs(a.total - a.prev))
@@ -161,12 +166,12 @@ export function SpendingShifts({ summary }: { summary: SpendSummary }) {
   return (
     <Card className="min-w-0 bg-tint-sun">
       <CardHeader>
-        <CardTitle className="font-display text-lg">Spending: last month and this month</CardTitle>
-        <CardDescription>The biggest changes</CardDescription>
+        <CardTitle className="font-display text-lg">{t("sc.shift")}</CardTitle>
+        <CardDescription>{t("sc.shift_d")}</CardDescription>
       </CardHeader>
       <CardContent>
         {shifts.length === 0 ? (
-          <Empty>Your spending is steady — no big shifts.</Empty>
+          <Empty>{t("sc.steady")}</Empty>
         ) : (
           <ul className="grid gap-2.5">
             {shifts.map((c) => {
@@ -182,10 +187,10 @@ export function SpendingShifts({ summary }: { summary: SpendSummary }) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">
-                      {c.label}: {up ? "spent more" : "spent less"}
+                      {t("cat." + c.label, c.label)}: {up ? t("sc.more") : t("sc.less")}
                     </p>
                     <p className="text-xs text-graphite tnum">
-                      Last month {formatCurrency(c.prev)}, this month {formatCurrency(c.total)}
+                      {t("sc.lastthis").replace("{a}", formatCurrency(c.prev)).replace("{b}", formatCurrency(c.total))}
                     </p>
                   </div>
                 </li>

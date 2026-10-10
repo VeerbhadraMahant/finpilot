@@ -798,3 +798,14 @@ export interface PhotoSuggestion { item: string | null; price: number | null; ca
 export type SnapResult =
   | { added: true; id: string; item: string; amount: number; category: string }
   | { added: false; suggestion: PhotoSuggestion };
+
+export type CouncilVote = { agent: string; name: string; score: number; level: string; why: string; do: string; source: "model" | "rules"; round: number };
+export type CouncilVerdict = {
+  type: "verdict"; cached: boolean; score: number; level: string; counts: Record<string, number>; votes: CouncilVote[];
+  dissent: { agent: string; name: string; level: string; why: string }[]; actions: string[]; anchor: number; tokens: number; debated: boolean;
+};
+export type CouncilEvent =
+  | { type: "facts"; facts: Record<string, unknown>; approx_tokens: number }
+  | { type: "vote"; vote: CouncilVote }
+  | { type: "debate"; median: number; agents: string[] }
+  | CouncilVerdict;

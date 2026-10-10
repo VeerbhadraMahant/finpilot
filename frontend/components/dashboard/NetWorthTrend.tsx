@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "@/lib/api";
@@ -13,6 +14,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
  * drops into dashboard/page.tsx in one line.
  */
 export function NetWorthTrend({ userId, days = 180 }: { userId: string; days?: number }) {
+  const { t } = useT();
   const fetchHistory = useCallback(() => api.netWorthHistory(userId, days), [userId, days]);
   const { data, error, loading, reload } = useAsync(fetchHistory, [userId, days]);
 
@@ -24,9 +26,9 @@ export function NetWorthTrend({ userId, days = 180 }: { userId: string; days?: n
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Net worth trend</CardTitle>
+        <CardTitle>{t("n.title")}</CardTitle>
       </CardHeader>
-      {loading && !data && <p className="text-sm text-pewter">Loading net worth history...</p>}
+      {loading && !data && <p className="text-sm text-pewter">{t("n.loading")}</p>}
       {error && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-ink">Could not load net worth history: {error}</p>
@@ -35,7 +37,7 @@ export function NetWorthTrend({ userId, days = 180 }: { userId: string; days?: n
           </button>
         </div>
       )}
-      {data && data.points.length === 0 && <p className="text-sm text-pewter">Not enough history yet.</p>}
+      {data && data.points.length === 0 && <p className="text-sm text-pewter">{t("n.enough")}</p>}
       {data && data.points.length > 0 && (
         <div className="h-56 sm:h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -55,7 +57,7 @@ export function NetWorthTrend({ userId, days = 180 }: { userId: string; days?: n
               <Tooltip
                 cursor={{ fill: "rgba(198, 241, 53, 0.18)" }}
                 labelFormatter={(d) => formatDate(String(d))}
-                formatter={(value) => [formatCurrency(Number(value)), "Net worth"]}
+                formatter={(value) => [formatCurrency(Number(value)), t("d.tab_nw")]}
                 contentStyle={{ borderRadius: 6, borderColor: "var(--color-mist)", fontSize: 12 }}
               />
               <Bar dataKey="net_worth" fill="#a6d11a" radius={[6, 6, 0, 0]} maxBarSize={48} isAnimationActive={false} />

@@ -14,7 +14,7 @@ from app.core import store
 from app.core.audit import log_audit_event
 from app.core.auth import resolve_user_id
 from app.models import AccountRow, AuditLogRow, ConnectionRow, TransactionRow
-from app.security import agents
+from app.security import agents, council
 
 router = APIRouter(prefix="/api/security", tags=["security"])
 
@@ -28,6 +28,17 @@ def _log(request: Request, user_id: str, what: str) -> None:
 def investigate(request: Request, user_id: str = Depends(resolve_user_id)) -> StreamingResponse:
     _log(request, user_id, "Evidence Room investigation read your transactions and accounts")
     return StreamingResponse((json.dumps(e, default=str) + "\n" for e in agents.investigate(user_id)), media_type="application/x-ndjson")
+
+
+@router.post("/{user_id}/council")
+async def convene_council(request: Request, user_id: str = Depends(resolve_user_id)) -> StreamingResponse:
+    _log(request, user_id, "Risk Council read a summary of your finances (no raw transactions)")
+
+    async def events():
+        async for e in council.convene(user_id):
+            yield json.dumps(e, default=str) + "\n"
+
+    return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
 @router.get("/{user_id}/report")

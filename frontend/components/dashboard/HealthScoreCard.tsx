@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import type { HealthScore } from "@/lib/types";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -8,7 +9,7 @@ import { cn } from "@/lib/utils";
 function getScoreTier(score: number): { label: string; color: string; bg: string; border: string } {
   if (score >= 75) {
     return {
-      label: "Optimal Health",
+      label: "h.optimal",
       color: "text-emerald-700",
       bg: "bg-emerald-50",
       border: "border-emerald-200",
@@ -16,14 +17,14 @@ function getScoreTier(score: number): { label: string; color: string; bg: string
   }
   if (score >= 55) {
     return {
-      label: "Moderate Stability",
+      label: "h.moderate",
       color: "text-amber-700",
       bg: "bg-amber-50",
       border: "border-amber-200",
     };
   }
   return {
-    label: "Attention Required",
+    label: "h.attn",
     color: "text-rose-700",
     bg: "bg-rose-50",
     border: "border-rose-200",
@@ -31,6 +32,7 @@ function getScoreTier(score: number): { label: string; color: string; bg: string
 }
 
 export function HealthScoreCard({ score }: { score: HealthScore }) {
+  const { t } = useT();
   const rounded = Math.round(score.overall);
   const tier = getScoreTier(rounded);
   const trend = score.trend_30d;
@@ -50,7 +52,7 @@ export function HealthScoreCard({ score }: { score: HealthScore }) {
 
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Financial Health Index</CardTitle>
+          <CardTitle>{t("h.title")}</CardTitle>
           <span
             className={cn(
               "px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap",
@@ -59,10 +61,10 @@ export function HealthScoreCard({ score }: { score: HealthScore }) {
               tier.border
             )}
           >
-            {tier.label}
+            {t(tier.label)}
           </span>
         </div>
-        <span className="text-xs text-pewter">Weighted 5-Pillar Model</span>
+        <span className="text-xs text-pewter">{t("h.model")}</span>
       </CardHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center pt-1 pb-2">
@@ -108,7 +110,7 @@ export function HealthScoreCard({ score }: { score: HealthScore }) {
               <span className="font-display text-5xl font-semibold text-ink leading-none tnum">
                 {rounded}
               </span>
-              <span className="text-xs font-medium text-ink/60 mt-1">out of 100</span>
+              <span className="text-xs font-medium text-ink/60 mt-1">{t("h.out100")}</span>
             </div>
           </div>
 
@@ -135,8 +137,8 @@ export function HealthScoreCard({ score }: { score: HealthScore }) {
         {/* Right Column: 5 Sub-Score Breakdown Bars */}
         <div className="lg:col-span-8 flex flex-col gap-2.5">
           <div className="flex items-center justify-between text-xs text-pewter font-medium px-1">
-            <span>Health Sub-Category</span>
-            <span>Weight & Score</span>
+            <span>{t("h.sub")}</span>
+            <span>{t("h.weight")}</span>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
@@ -152,9 +154,9 @@ export function HealthScoreCard({ score }: { score: HealthScore }) {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-ink">{sub.name}</span>
+                      <span className="text-sm font-semibold text-ink">{t("sub." + sub.name, sub.name)}</span>
                       <span className="text-[10px] text-pewter font-medium bg-fog px-1.5 py-0.5 rounded border border-black/[0.04]">
-                        Weight: {Math.round(sub.weight * 100)}%
+                        {t("h.w")} {Math.round(sub.weight * 100)}%
                       </span>
                     </div>
                     <div className="flex items-baseline gap-1">

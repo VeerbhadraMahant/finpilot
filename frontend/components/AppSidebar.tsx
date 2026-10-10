@@ -98,6 +98,7 @@ export const NAV_GROUPS: { label: string; tone: string; links: NavLink[] }[] = [
     links: [
       { href: "/security", label: "Security", icon: ShieldCheck },
       { href: "/evidence-room", label: "Evidence Room", icon: ScanSearch },
+      { href: "/council", label: "Risk Council", icon: Users },
       { href: "/twin", label: "Twin Simulator", icon: Network },
       { href: "/my-data", label: "My Data", icon: Database },
       { href: "/profile", label: "Profile", icon: UserRound },

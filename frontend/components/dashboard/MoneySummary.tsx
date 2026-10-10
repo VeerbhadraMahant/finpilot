@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Landmark, Repeat, Sparkles, Wallet } from "lucide-react";
@@ -100,6 +101,7 @@ export function MoneySummary({
   insights: AnswerContract;
   connected: boolean;
 }) {
+  const { t } = useT();
   const fetchAccounts = useCallback(() => api.accounts(userId), [userId]);
   const { data: accounts } = useAsync(fetchAccounts, [userId]);
 
@@ -121,13 +123,13 @@ export function MoneySummary({
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="font-display text-xl font-semibold text-ink">Your money, summarised</h2>
-        <p className="text-sm text-graphite">What you hold, what you owe, what repeats each month, and what to do next.</p>
+        <h2 className="font-display text-xl font-semibold text-ink">{t("m.title")}</h2>
+        <p className="text-sm text-graphite">{t("m.sub")}</p>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={Wallet} title="Total amount" intro={`Cash and investments across ${assets.length} accounts.`} href="/connect">
+        <SummaryCard icon={Wallet} title={t("m.total")} intro={t("m.total_i").replace("{n}", String(assets.length))} href="/connect">
           {assets.length === 0 ? (
-            <p className="text-sm text-pewter">Link an account to see your balances.</p>
+            <p className="text-sm text-pewter">{t("m.link")}</p>
           ) : (
             <>
               <Big>{formatCurrency(assetTotal)}</Big>
@@ -137,27 +139,27 @@ export function MoneySummary({
           )}
         </SummaryCard>
 
-        <SummaryCard icon={Landmark} title="Debts & loans" intro={`${debts.length} accounts. The highest rate is paid down first.`} href="/simulate">
+        <SummaryCard icon={Landmark} title={t("m.debts")} intro={t("m.debts_i").replace("{n}", String(debts.length))} href="/simulate">
           {debts.length === 0 ? (
-            <p className="text-sm text-pewter">No debt on record.</p>
+            <p className="text-sm text-pewter">{t("m.nodebt")}</p>
           ) : (
             <>
               <Big>{formatCurrency(owed)}</Big>
               <ShareBar parts={debts.map((d) => ({ key: d.id, value: d.principal }))} />
               <Legend
                 rows={[
-                  { key: "min", label: "Minimum per month", value: formatCurrency(minPay) },
-                  { key: "apr", label: "Highest APR", value: `${topApr.toFixed(1)}%` },
-                  { key: "n", label: "Accounts", value: String(debts.length) },
+                  { key: "min", label: t("m.min"), value: formatCurrency(minPay) },
+                  { key: "apr", label: t("m.apr"), value: `${topApr.toFixed(1)}%` },
+                  { key: "n", label: t("m.accts"), value: String(debts.length) },
                 ]}
               />
             </>
           )}
         </SummaryCard>
 
-        <SummaryCard icon={Repeat} title="Recurring" intro="Bills and subscriptions, as a monthly average." href="/timeline">
+        <SummaryCard icon={Repeat} title={t("m.rec")} intro={t("m.rec_i")} href="/timeline">
           {monthly.length === 0 ? (
-            <p className="text-sm text-pewter">No recurring payments found yet.</p>
+            <p className="text-sm text-pewter">{t("m.norec")}</p>
           ) : (
             <>
               <Big>{formatCurrency(recurringTotal)}</Big>
@@ -167,15 +169,15 @@ export function MoneySummary({
           )}
         </SummaryCard>
 
-        <SummaryCard icon={Sparkles} title="Recommended actions" intro="The highest-impact next steps from your data." href="/copilot">
+        <SummaryCard icon={Sparkles} title={t("m.actions")} intro={t("m.actions_i")} href="/copilot">
           {!connected || actions.length === 0 ? (
-            <p className="text-sm text-pewter">Actions show up once your data is connected.</p>
+            <p className="text-sm text-pewter">{t("m.noact")}</p>
           ) : (
             <ul className="grid gap-2">
               {actions.map((r, i) => (
                 <li key={i} className="rounded-2xl bg-tint-lime p-3">
                   <p className="line-clamp-2 text-sm font-medium text-ink">{r.text}</p>
-                  <p className="mt-1 text-[11px] text-graphite">{Math.round(r.confidence * 100)}% confidence</p>
+                  <p className="mt-1 text-[11px] text-graphite">{Math.round(r.confidence * 100)}% {t("m.conf")}</p>
                 </li>
               ))}
             </ul>

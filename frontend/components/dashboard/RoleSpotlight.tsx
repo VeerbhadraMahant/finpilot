@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback } from "react";
 import { ExternalLink } from "lucide-react";
 import { api } from "@/lib/api";
@@ -54,9 +55,11 @@ const GENERAL: Track = {
 
 /** A role-specific strip at the top of the dashboard, plus progress towards the monthly savings target they gave us. */
 export function RoleSpotlight({ userId, savedThisMonth }: { userId: string; savedThisMonth: number }) {
+  const { t } = useT();
   const { data } = useAsync(useCallback(() => api.profile(userId), [userId]), [userId]);
   const a = data?.answers;
   if (!a?.role) return null;
+  const trackKey = TRACKS[a.role] ? a.role : "General";
   const track = TRACKS[a.role] ?? GENERAL;
   const target = Number(a.save_target) || 0;
   const pct = target > 0 ? Math.max(0, Math.min(100, (savedThisMonth / target) * 100)) : 0;
@@ -65,19 +68,19 @@ export function RoleSpotlight({ userId, savedThisMonth }: { userId: string; save
   return (
     <section className="rounded-card bg-sage p-5 text-ink shadow-sm sm:p-6">
       <h2 className="font-display text-xl font-semibold">
-        {a.role === "Other" && a.role_other ? `${a.role_other} plan` : track.title}
-        {a.savings_goal && <span className="ml-2 text-sm font-normal text-ink/70">Aiming for: {a.savings_goal}</span>}
+        {a.role === "Other" && a.role_other ? t("r.plan").replace("{r}", a.role_other) : t("r." + trackKey, track.title)}
+        {a.savings_goal && <span className="ml-2 text-sm font-normal text-ink/70">{t("r.aim")} {a.savings_goal}</span>}
       </h2>
       <p className="mt-1 max-w-2xl text-sm text-ink/75">
-        {track.blurb}
-        {earns === 0 && a.role === "Student" && " You said you do not earn, so any pocket money counts as your income here."}
+        {t("r." + trackKey + ".b", track.blurb)}
+        {earns === 0 && a.role === "Student" && " " + t("r.student_note")}
       </p>
 
       {target > 0 && (
         <div className="mt-4 max-w-md">
           <div className="flex justify-between text-xs">
-            <span>Saved this month: {formatCurrency(Math.max(0, savedThisMonth))}</span>
-            <span>Target: {formatCurrency(target)}</span>
+            <span>{t("r.saved")} {formatCurrency(Math.max(0, savedThisMonth))}</span>
+            <span>{t("r.target")} {formatCurrency(target)}</span>
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/60">
             <div className="h-full rounded-full bg-ink" style={{ width: `${pct}%` }} />

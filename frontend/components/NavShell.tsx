@@ -49,6 +49,7 @@ function PersonaSwitcher() {
         return (
           <button
             key={persona.id}
+            title={details ? `${details.city} · ${details.tag}` : undefined}
             type="button"
             role="radio"
             aria-checked={active}
@@ -73,11 +74,6 @@ function PersonaSwitcher() {
                 )}
               />
               <span>{persona.label}</span>
-              {details && (
-                <span className="text-[10px] text-pewter font-normal hidden min-[1700px]:inline">
-                  {details.tag}
-                </span>
-              )}
             </span>
           </button>
         );
@@ -120,7 +116,7 @@ export function NavShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("finpilot:open-command-palette"))}
-                className="hidden h-9 w-64 items-center gap-2 rounded-xl bg-white px-3 text-sm text-muted-foreground shadow-sm md:flex"
+                className="hidden h-9 w-44 items-center xl:w-56 gap-2 rounded-xl bg-white px-3 text-sm text-muted-foreground shadow-sm md:flex"
                 title="Search (Ctrl+K)"
                 aria-label="Open search"
               >
@@ -140,7 +136,7 @@ export function NavShell({ children }: { children: ReactNode }) {
               >
                 {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               </Button>
-              <div className="hidden sm:block">
+              <div className="hidden items-center gap-1.5 sm:flex">
                 <LanguageSwitcher />
                 <CurrencySelector />
               </div>

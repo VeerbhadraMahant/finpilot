@@ -58,6 +58,7 @@ import type {
   UpdateBudgetRequest,
   UpdateGoalRequest,
   SecurityEvent,
+  CouncilEvent,
   SecurityFinding,
   SecurityGraph,
   SecurityReport,
@@ -269,6 +270,22 @@ export const api = {
     const res = await fetch(`${API_URL}/api/security/${userId}/investigate`, { method: "POST", headers: await authHeader() });
     clearApiCache();
     if (!res.ok || !res.body) throw new Error(`Investigation failed: ${res.status}`);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      lines.filter(Boolean).forEach((l) => onEvent(JSON.parse(l)));
+    }
+  },
+  /** Streams the Risk Council: one event per agent vote, then the verdict. */
+  convene: async (userId: string, onEvent: (e: CouncilEvent) => void) => {
+    const res = await fetch(`${API_URL}/api/security/${userId}/council`, { method: "POST", headers: await authHeader() });
+    if (!res.ok || !res.body) throw new Error(`Council failed: ${res.status}`);
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let buf = "";
