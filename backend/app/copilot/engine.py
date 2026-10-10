@@ -5,6 +5,7 @@
 Identity questions are answered locally. Offline mode uses the rule-based router and sends nothing anywhere.
 """
 import json
+import os
 from datetime import date
 import re
 import time
@@ -107,7 +108,7 @@ _IDENTITY_REPLY = (
 )
 
 _FINANCE = re.compile(
-    r"₹|scheme|yojana|deadline|due date|ppf|nps|elss|80c|itr|advance tax|gold bond|rupee|rs|spend|spent|expens|income|salary|earn|debt|loan|emi|sip|subscri|saving|budget|forecast|invoice|bill|invest|mutual|stock|"
+    r"₹|financ|money|wealth|how am i doing|scheme|yojana|deadline|due date|ppf|nps|elss|80c|itr|advance tax|gold bond|rupee|rs|spend|spent|expens|income|salary|earn|debt|loan|emi|sip|subscri|saving|budget|forecast|invoice|bill|invest|mutual|stock|"
     r"transaction|cash|afford|balance|net worth|tax|goal|credit|card|rent|insurance|health score|emergency fund|cancel|prepay|my (money|account|finance)",
     re.I,
 )
@@ -194,7 +195,8 @@ def _prefetch(user_id: str, message: str, history: Optional[list[ChatMessage]]):
     rf = pool.submit(rag.retrieve, user_id, query, 8)
     wf = pool.submit(gather, message, turns) if gather else None
     pool.shutdown(wait=False)
-    deadline = time.monotonic() + 40  # one shared budget: both run in parallel, so neither waits twice
+    budget = 8 if os.getenv("VERCEL") else 20
+    deadline = time.monotonic() + budget
     try:
         chunks = rf.result(timeout=max(1, deadline - time.monotonic()))
     except Exception as exc:  # noqa: BLE001
@@ -211,14 +213,32 @@ def _prefetch(user_id: str, message: str, history: Optional[list[ChatMessage]]):
     return chunks, plan, list(sources)
 
 
+LANGUAGES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", "ur": "Urdu", "kn": "Kannada", "ml": "Malayalam"}
+
+
+def _style(language: str, simple: bool) -> str:
+    out = ""
+    if language in LANGUAGES and language != "en":
+        out += f" (Write your whole reply in {LANGUAGES[language]}, in its own script. Keep amounts exact.)"
+    if simple:
+        out += (" (The user reads very little. Talk like a kind friend: at most 3 short sentences, everyday words, no jargon, "
+                "no tables or lists, round amounts to the nearest ten rupees in words, and end with one simple question or one simple thing to do.)")
+    return out
+
+
 def answer(
     user_id: str,
     message: str,
     history: Optional[list[ChatMessage]] = None,
     force_offline: bool = False,
     model: str = "auto",
+    language: str = "en",
+    simple: bool = False,
 ) -> AnswerContract:
     """Answer a user's question. Never raises.
+
+    `language`: reply in this language (a key of LANGUAGES). `simple`: talk like a kind friend, for users who
+    read little: very short, plain words, no jargon.
 
     `model`: auto = money questions get the deep, number-checking engine and everything else the fast chat engine
     (each tries the other if it fails); deep = always the deep engine; fast = always the fast engine (given your data
@@ -237,8 +257,9 @@ def answer(
     prior = next((m.content for m in reversed(history or []) if m.role == "user"), "")
     money = not _is_general(message) or (len(message) < 40 and not _is_general(prior))
     chunks, plan, sources = _prefetch(user_id, message, history)
-    deep = lambda: _nvidia_answer(user_id, message, history, chunks, sources)  # noqa: E731
-    fast = lambda: _general_answer(message, history, user_id if money else None, chunks, sources)  # noqa: E731
+    ask = message + _style(language, simple)
+    deep = lambda: _nvidia_answer(user_id, ask, history, chunks, sources)  # noqa: E731
+    fast = lambda: _general_answer(ask, history, user_id if money else None, chunks, sources)  # noqa: E731
     steps = [fast, deep] if model == "fast" or (model == "auto" and not money) else [deep, fast]
 
     # Nugen's second opinion runs alongside money questions only
@@ -260,6 +281,7 @@ def answer(
             narrative=f"I couldn't answer right now because {why}. Please try again in a minute.",
             data_gaps=[DataGap(text="The AI engine was unavailable.", what_would_help="Retry shortly, or turn on 'Keep my data on this device' for basic rule-based answers.")],
         )
+    result.query = message
     if sources:
         result.sources = [Source(title=w.title, url=w.url) for w in sources]
     elif getattr(plan, "search", False):

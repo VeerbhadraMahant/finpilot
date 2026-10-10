@@ -223,7 +223,7 @@ export function SankeyDiagram({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-black/[0.04]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ember bg-orange-50 px-2.5 py-0.5 rounded-full border border-ember/20">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-navy bg-navy/5 px-2.5 py-0.5 rounded-full border border-navy/20">
               Cash-Flow Reports
             </span>
             <span className="text-xs text-pewter font-medium">• Double-Entry Flow Analysis</span>

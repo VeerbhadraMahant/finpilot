@@ -182,7 +182,7 @@ export function DeviceMockupSection({
               </div>
 
               {/* Safe to Spend Header */}
-              <div className="mt-3 p-2.5 rounded-xl bg-orange-50/50 border border-ember/20 text-center">
+              <div className="mt-3 p-2.5 rounded-xl bg-tint-lime/50 border border-lime-dark/30 text-center">
                 <span className="text-[9px] uppercase tracking-wider text-pewter font-semibold block">
                   Safe To Spend
                 </span>
@@ -213,7 +213,7 @@ export function DeviceMockupSection({
             {/* Bottom floating copilot prompt */}
             <div className="p-2 rounded-xl bg-sage text-ink text-[9px] flex items-center justify-between shadow-sm">
               <span>Ask FinPilot...</span>
-              <ArrowUpRight className="h-3 w-3 text-ember" />
+              <ArrowUpRight className="h-3 w-3 text-navy" />
             </div>
           </div>
         </motion.div>

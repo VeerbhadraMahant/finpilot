@@ -7,11 +7,14 @@ from app.core import store
 from app.core.auth import resolve_user_id
 from app.core.ratelimit import upload_limiter
 from app.models import DocumentRow
+from app.ocr import read_text
+from app.rag.compress import compact
 from app.rag.corpus import split_document
 
 router = APIRouter()
 
-_EXTS = (".txt", ".md", ".csv", ".json")
+_IMAGES = (".png", ".jpg", ".jpeg", ".webp")
+_EXTS = (".txt", ".md", ".csv", ".json") + _IMAGES
 _MAX_BYTES = 2 * 1024 * 1024
 _MAX_CHARS = 200_000
 
@@ -25,12 +28,13 @@ async def upload_document(file: UploadFile, user_id: str = Depends(resolve_user_
     raw = await file.read(_MAX_BYTES + 1)
     if len(raw) > _MAX_BYTES:
         raise HTTPException(400, "File too large (max 2MB)")
-    text = raw.decode("utf-8", errors="replace")[:_MAX_CHARS]
+    original = read_text(raw) if name.lower().endswith(_IMAGES) else raw.decode("utf-8", errors="replace")
+    text = compact(name, original)[:_MAX_CHARS]
     if not text.strip():
-        raise HTTPException(400, "uploaded file is empty")
+        raise HTTPException(400, "No text found in that file")
     row = DocumentRow(user_id=user_id, name=name, text=text)
     store.put(row)
-    return {"id": row.id, "name": name, "chars": len(text), "chunks": len(split_document(text))}
+    return {"id": row.id, "name": name, "chars": len(text), "original_chars": len(original), "chunks": len(split_document(text))}
 
 
 @router.get("/api/documents/{user_id}")

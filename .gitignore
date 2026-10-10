@@ -55,3 +55,6 @@ antigravity_pack.zip
 # rag embedding cache
 .cache/
 !/ENVIRONMENT.md
+
+# local CLIP model cache
+backend/.model_cache/

@@ -195,7 +195,7 @@ export function FloatingOverlapCard({
         <button
           type="button"
           onClick={onAction}
-          className="mt-2 inline-flex items-center gap-2 rounded-chip bg-sage text-ink px-5 py-3 text-sm font-semibold hover:bg-carbon active:scale-[0.98] transition-all shadow-[0_2px_10px_rgba(0,0,0,0.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/40 cursor-pointer"
+          className="mt-2 inline-flex items-center gap-2 rounded-chip bg-navy text-white px-5 py-3 text-sm font-semibold hover:bg-navy-light active:scale-[0.98] transition-all shadow-[0_2px_10px_rgba(23,37,84,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/40 cursor-pointer"
         >
           <span>{actionText}</span>
           <ArrowUpRight className="h-4 w-4" />

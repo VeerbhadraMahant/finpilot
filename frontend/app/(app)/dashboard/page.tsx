@@ -22,6 +22,11 @@ import { CashSummaryCard } from "@/components/dashboard/CashSummaryCard";
 import { SpendByCategoryBars } from "@/components/dashboard/SpendByCategoryBars";
 import { MoneySummary } from "@/components/dashboard/MoneySummary";
 import { InvestGuide } from "@/components/dashboard/InvestGuide";
+import { SimpleHome } from "@/components/dashboard/SimpleHome";
+import { useAnalystMode, useSimpleMode } from "@/lib/simple";
+import { AnalystPanel } from "@/components/dashboard/AnalystPanel";
+import { useT } from "@/lib/i18n";
+import { RoleSpotlight } from "@/components/dashboard/RoleSpotlight";
 import { PromoCard } from "@/components/dashboard/PromoCard";
 import { CategoryDonut, IncomeVsSpend, SpendingShifts, TopMerchants } from "@/components/dashboard/SpendCharts";
 import { EvilHoverTraceBarChart } from "@/components/shadcn/hover-trace-bar-chart";
@@ -56,6 +61,10 @@ function Placeholder({ title, body }: { title: string; body: string }) {
 
 export default function DashboardPage() {
   const userId = useUserId();
+  const { t } = useT();
+  const [simple, setSimple] = useSimpleMode(userId);
+  const [analyst, setAnalyst] = useAnalystMode(userId);
+  const profile = useAsync(useCallback(() => api.profile(userId), [userId]), [userId]);
   const fetchDashboard = useCallback(() => api.dashboard(userId), [userId]);
   const { data, error, loading, reload } = useAsync(fetchDashboard, [userId]);
   // Pull recent transactions (200/page max) to power the charts and sparklines.
@@ -74,7 +83,7 @@ export default function DashboardPage() {
   if (loading && !data) {
     return (
       <div className="flex flex-col gap-4">
-        <LoadingMark icon={WalletIcon} label="Loading your dashboard" />
+        <LoadingMark icon={WalletIcon} label={t("d.loading")} />
         <div className="flex flex-col gap-4 animate-pulse">
         <div className="h-60 rounded-card elevation-card p-6">
           <HealthScoreSkeleton />
@@ -109,14 +118,14 @@ export default function DashboardPage() {
           !
         </div>
         <div>
-          <h3 className="text-base font-semibold text-ink">Could not load financial snapshot</h3>
+          <h3 className="text-base font-semibold text-ink">{t("d.err_title")}</h3>
           <p className="text-xs text-graphite mt-1 max-w-md">{error}</p>
           <p className="text-[11px] text-pewter mt-1">
-            Ensure the backend server is running{process.env.NODE_ENV === "production" ? "." : ` on ${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"}`}
+            {t("d.err_hint")}{process.env.NODE_ENV === "production" ? "." : ` on ${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"}`}
           </p>
         </div>
         <LegacyButton variant="secondary" size="sm" onClick={reload} className="mt-2">
-          Retry Fetching Snapshot
+          {t("d.retry")}
         </LegacyButton>
       </LegacyCard>
     );
@@ -125,6 +134,9 @@ export default function DashboardPage() {
   if (!data) return null;
 
   const connected = data.has_data;
+  if (simple) {
+    return <SimpleHome name={profile.data?.answers.name} income={data.monthly_income} spent={data.monthly_expenses} connected={connected} onFullView={() => setSimple(false)} onSaved={reload} />;
+  }
   const months = spend.months;
   const topCategory = spend.categories[0]?.label;
 
@@ -139,32 +151,40 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-black/[0.04]">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-medium text-ink">
-            Your money, at a glance
+            {t("dash.title")}
           </h1>
           <p className="text-xs sm:text-sm text-graphite mt-0.5">
-            Where you stand, where it is going, and what to do next. Fully automatic.
+            {t("d.sub")}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setSimple(true)}>
+            {t("dash.simple_view")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setAnalyst(!analyst)}>
+            {analyst ? t("d.std_view") : t("d.analyst_view")}
+          </Button>
           <Button variant="ghost" size="sm" onClick={reload}>
             <RefreshCw />
-            Refresh
+            {t("d.refresh")}
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href="/tax">
               <Calculator className="text-ember" />
-              Tax Optimizer
+              {t("d.tax")}
             </Link>
           </Button>
           <Button size="sm" asChild>
             <Link href="/statement">
               <FileText />
-              Export Statement
+              {t("d.export")}
             </Link>
           </Button>
         </div>
       </div>
+
+      {analyst && connected && <AnalystPanel data={data} spend={spend} />}
 
       {!connected && (
         <div className="relative overflow-hidden rounded-card bg-sage p-5 text-ink shadow-sm sm:p-6">
@@ -175,20 +195,22 @@ export default function DashboardPage() {
                 <Sparkles className="size-5" />
               </span>
               <div>
-                <h2 className="font-display text-xl font-semibold">Connect Google Pay to wake up your dashboard</h2>
+                <h2 className="font-display text-xl font-semibold">{t("d.connect_h")}</h2>
                 <p className="mt-0.5 max-w-xl text-sm text-ink/75">
-                  One tap links your payments. FinPilot imports, categorises and analyses everything. Nothing to type in.
+                  {t("d.connect_p")}
                 </p>
               </div>
             </div>
             <Button asChild size="lg" className="shrink-0 rounded-full bg-lime text-ink hover:bg-lime/85">
               <Link href="/connect">
-                <Link2 /> Connect Google Pay
+                <Link2 /> {t("d.connect_gp")}
               </Link>
             </Button>
           </div>
         </div>
       )}
+
+      <RoleSpotlight userId={userId} savedThisMonth={spend.months.at(-1)?.savings ?? 0} />
 
       {/* Row 1: four equal summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -201,9 +223,9 @@ export default function DashboardPage() {
         />
         <IncomeCard months={spend.months} txns={txns ?? []} />
         <KpiCard
-          label="Money out"
+          label={t("d.money_out")}
           value={formatCurrency(data.monthly_expenses)}
-          sub="per month"
+          sub={t("d.per_month")}
           icon={TrendingDown}
           variant="ink"
           series={months.map((m) => m.spend)}
@@ -217,17 +239,17 @@ export default function DashboardPage() {
         </div>
         <Card className="min-w-0 lg:col-span-3">
           <CardHeader>
-            <CardTitle className="font-display text-lg">Monthly spend</CardTitle>
-            <CardDescription>Hover a bar to trace its value</CardDescription>
+            <CardTitle className="font-display text-lg">{t("d.monthly_spend")}</CardTitle>
+            <CardDescription>{t("d.hover")}</CardDescription>
           </CardHeader>
           <CardContent className="min-h-52 flex-1">
             {spend.months.length > 0 ? (
               <EvilHoverTraceBarChart
-                label="Spent"
+                label={t("d.spent")}
                 data={spend.months.map((m) => ({ month: m.label, amount: Math.round(m.spend) }))}
               />
             ) : (
-              <Empty>Monthly spending will chart here.</Empty>
+              <Empty>{t("d.monthly_empty")}</Empty>
             )}
           </CardContent>
         </Card>
@@ -241,7 +263,7 @@ export default function DashboardPage() {
       {connected ? (
         <HealthScoreCard score={data.health_score} />
       ) : (
-        <Placeholder title="Financial health score" body="Your score, with the factors behind it, appears once an account is connected." />
+        <Placeholder title={t("d.health_title")} body={t("d.health_empty")} />
       )}
 
       {/* Forecast / net worth */}
@@ -249,13 +271,13 @@ export default function DashboardPage() {
         <Tabs defaultValue="spend">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>Outlook</CardTitle>
-              <CardDescription>Weekly spending by category, the 90-day forecast and net worth</CardDescription>
+              <CardTitle>{t("d.outlook")}</CardTitle>
+              <CardDescription>{t("d.outlook_d")}</CardDescription>
             </div>
             <TabsList>
-              <TabsTrigger value="spend">Spending mix</TabsTrigger>
-              <TabsTrigger value="forecast">90-day cash flow</TabsTrigger>
-              <TabsTrigger value="networth">Net worth</TabsTrigger>
+              <TabsTrigger value="spend">{t("d.tab_mix")}</TabsTrigger>
+              <TabsTrigger value="forecast">{t("d.tab_fc")}</TabsTrigger>
+              <TabsTrigger value="networth">{t("d.tab_nw")}</TabsTrigger>
             </TabsList>
           </CardHeader>
           <CardContent className="min-w-0">
@@ -263,10 +285,10 @@ export default function DashboardPage() {
               <SpendByCategoryBars txns={txns ?? []} />
             </TabsContent>
             <TabsContent value="forecast">
-              {connected ? <ForecastChart forecast={data.forecast} bars /> : <Empty>Your 90-day cash-flow forecast will draw here.</Empty>}
+              {connected ? <ForecastChart forecast={data.forecast} bars /> : <Empty>{t("d.fc_empty")}</Empty>}
             </TabsContent>
             <TabsContent value="networth">
-              {connected ? <NetWorthTrend userId={userId} /> : <Empty>Net worth history will appear here.</Empty>}
+              {connected ? <NetWorthTrend userId={userId} /> : <Empty>{t("d.nw_empty")}</Empty>}
             </TabsContent>
           </CardContent>
         </Tabs>

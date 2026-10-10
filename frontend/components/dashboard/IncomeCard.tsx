@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n";
 import { TrendingDown, TrendingUp, Zap } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import type { MonthTotals } from "@/lib/spend";
@@ -9,6 +10,7 @@ const ROWS = 5;
 
 /** "My Income": latest month total, a squares sparkline of recent months, and the top income sources. */
 export function IncomeCard({ months, txns }: { months: MonthTotals[]; txns: Transaction[] }) {
+  const { lang, t: tr } = useT();
   const latest = months.at(-1);
   const prev = months.at(-2);
   const total = latest?.income ?? 0;
@@ -27,14 +29,14 @@ export function IncomeCard({ months, txns }: { months: MonthTotals[]; txns: Tran
   return (
     <div className="flex h-full flex-col justify-between gap-4 rounded-card bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between text-sm font-medium text-ink">
-        <span>My Income</span>
+        <span>{tr("i.title")}</span>
         <span className="text-graphite">
-          {latest ? new Date(`${latest.month}-01`).toLocaleDateString("en", { month: "long", year: "numeric" }) : "No data"}
+          {latest ? new Date(`${latest.month}-01`).toLocaleDateString(lang, { month: "long", year: "numeric" }) : tr("i.nodata")}
         </span>
       </div>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-graphite">Money you earned this month</p>
+          <p className="text-sm text-graphite">{tr("i.sub")}</p>
           <BigAmount value={total} className="mt-1 block text-3xl" />
         </div>
         <div className="flex items-end gap-1" aria-hidden>
@@ -53,12 +55,12 @@ export function IncomeCard({ months, txns }: { months: MonthTotals[]; txns: Tran
       <div className="flex flex-wrap gap-2 text-xs text-graphite">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-fog px-3 py-2">
           {delta >= 0 ? <TrendingUp className="size-4 text-ink" /> : <TrendingDown className="size-4 text-ink" />}
-          Last month <span className="font-semibold tnum text-ink">{prev ? formatCurrency(prev.income) : "--"}</span>
-          This month <span className="font-semibold tnum text-ink">{formatCurrency(total)}</span>
+          {tr("i.last")} <span className="font-semibold tnum text-ink">{prev ? formatCurrency(prev.income) : "--"}</span>
+          {tr("home.this_month")} <span className="font-semibold tnum text-ink">{formatCurrency(total)}</span>
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-fog px-3 py-2">
           <Zap className="size-4 text-ink" />
-          {delta >= 0 ? "Up by" : "Down by"}
+          {delta >= 0 ? tr("i.up") : tr("i.down")}
           <span className={`font-semibold tnum ${tone}`}>
             {formatCurrency(Math.abs(delta))}{pct !== null && ` (${Math.abs(pct).toFixed(1)}%)`}
           </span>

@@ -18,18 +18,18 @@ def _cleanup():
 
 def test_levels_nest():
     ids = {lv: [q["id"] for q in profile.questions(lv)] for lv in profile.LEVELS}
-    assert ids["basic"] == ["name", "occupation"]
-    assert ids["basic"] == ids["standard"][:2] and ids["standard"] == ids["deep"][: len(ids["standard"])]
+    assert ids["basic"] == ["age", "role", "role_other", "monthly_income", "savings_goal", "save_target", "comfort", "name"]
+    assert ids["basic"] == ids["standard"][:8] and ids["standard"] == ids["deep"][: len(ids["standard"])]
     assert len(ids["basic"]) < len(ids["standard"]) < len(ids["deep"])
 
 
 def test_save_get_and_copilot_context():
     try:
         assert c.get(f"/api/profile/{UID}").json()["completed"] is False
-        r = c.put(f"/api/profile/{UID}", json={"level": "basic", "answers": {"name": "Asha", "occupation": "Nurse", "city": "ignored: not a basic question"}})
-        assert r.status_code == 200 and r.json()["answers"] == {"name": "Asha", "occupation": "Nurse"}
-        assert "Nurse" in nugen._context(UID)["about_the_user"]
-        assert any(card[1] == "profile" and "Nurse" in card[2] for card in corpus._static_cards(UID, []))
+        r = c.put(f"/api/profile/{UID}", json={"level": "basic", "answers": {"name": "Asha", "role": "Farmer", "city": "ignored: not a basic question"}})
+        assert r.status_code == 200 and r.json()["answers"] == {"name": "Asha", "role": "Farmer"}
+        assert "Farmer" in nugen._context(UID)["about_the_user"]
+        assert any(card[1] == "profile" and "Farmer" in card[2] for card in corpus._static_cards(UID, []))
         c.put(f"/api/profile/{UID}", json={"level": "standard", "answers": {"city": "Pune"}})  # upgrading keeps earlier answers
         got = c.get(f"/api/profile/{UID}").json()
         assert got["level"] == "standard" and got["answers"]["name"] == "Asha" and got["answers"]["city"] == "Pune"

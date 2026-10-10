@@ -140,8 +140,8 @@ export function InteractiveBentoGrid() {
       {/* Header */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-ember/20 bg-ember/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-ember">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-navy/20 bg-navy/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-navy">
+            <Sparkles className="h-3.5 w-3.5 text-navy" />
             Tactile Bento Architecture
           </div>
           <h2 className="mt-2 font-display text-2xl md:text-3xl font-bold tracking-tight text-[var(--foreground)]">
@@ -248,7 +248,7 @@ export function InteractiveBentoGrid() {
               <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
                 Resilience Engine
               </span>
-              <span className="rounded-full bg-ember/10 border border-ember/20 px-2 py-0.5 text-[11px] font-semibold text-ember">
+              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                 Grade A+
               </span>
             </div>
@@ -367,7 +367,7 @@ export function InteractiveBentoGrid() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.2 }}
-                  className="group flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3 hover:border-ember/30 hover:bg-[var(--surface)] transition-colors"
+                  className="group flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3 hover:border-navy/30 hover:bg-[var(--surface)] transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -425,8 +425,8 @@ export function InteractiveBentoGrid() {
               <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
                 Autonomous Rules
               </span>
-              <span className="flex items-center gap-1 text-xs text-ember font-semibold">
-                <Zap className="h-3.5 w-3.5 fill-ember" />
+              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                <Zap className="h-3.5 w-3.5 fill-emerald-600 dark:fill-emerald-400" />
                 Active
               </span>
             </div>
@@ -442,7 +442,7 @@ export function InteractiveBentoGrid() {
               {autopilotRules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3 transition-colors hover:border-ember/20"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] p-3 transition-colors hover:border-navy/20"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>

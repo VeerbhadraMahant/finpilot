@@ -134,7 +134,7 @@ export default function Home() {
           <Reveal delay={0.15} className="w-full">
             <div className="mt-10 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3.5 w-full">
               <Link href="/dashboard" onClick={startDemo} className="w-full sm:w-auto">
-                <Button variant="primary" size="lg" className="w-full sm:w-auto px-8 py-3.5 text-base">
+                <Button variant="lime" size="lg" className="w-full sm:w-auto px-8 py-3.5 text-base">
                   Explore Live Demo
                   <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -358,7 +358,7 @@ export default function Home() {
               <Link
                 href="/dashboard"
                 onClick={() => setUserId(p.id)}
-                className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-ink hover:text-ember transition-colors"
+                className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-ink hover:text-navy transition-colors"
               >
                 Load {p.name}&apos;s Snapshot →
               </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { api } from "@/lib/api";
@@ -12,6 +13,7 @@ const BAR_TONES = ["bg-[#3f7d5c] text-white", "bg-lime text-ink", "bg-[#4fe0b0] 
 
 /** "Remaining monthly": share of the monthly budgets still unspent, with the three biggest budgets as bars. */
 export function BudgetRemainingCard({ userId, spend }: { userId: string; spend: SpendSummary }) {
+  const { t } = useT();
   const { data: budgets } = useAsync(() => api.budgets(userId), [userId]);
   const rows = (budgets ?? [])
     .map((b) => {
@@ -25,19 +27,19 @@ export function BudgetRemainingCard({ userId, spend }: { userId: string; spend: 
   const remaining = limit > 0 ? Math.max(0, Math.round((1 - used / limit) * 100)) : null;
   const message =
     remaining === null
-      ? "Set monthly budgets to see how much room you have left."
+      ? t("b.empty")
       : remaining >= 40
-        ? "You are in great shape. Your monthly usage is still very safe."
+        ? t("b.great")
         : remaining >= 15
-          ? "Keep an eye on it. Some budgets are getting tight."
-          : "You are close to your limits this month.";
+          ? t("b.watch")
+          : t("b.close");
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-card bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between text-sm font-medium text-ink">
-        <span>Remaining Monthly</span>
+        <span>{t("b.title")}</span>
         <Link href="/budgets" className="inline-flex items-center gap-1 hover:underline">
-          Budget setting <ArrowUpRight className="size-4" />
+          {t("b.setting")} <ArrowUpRight className="size-4" />
         </Link>
       </div>
       <div className="flex items-end justify-between gap-4">
@@ -57,7 +59,7 @@ export function BudgetRemainingCard({ userId, spend }: { userId: string; spend: 
               title={`${formatCurrency(r.used)} of ${formatCurrency(r.b.monthly_limit)}`}
             >
               <span className="font-display text-2xl font-semibold tnum">{Math.round(r.pct * 100)}%</span>
-              <span className="text-xs opacity-80">{CATEGORY_META[r.b.category].label}</span>
+              <span className="text-xs opacity-80">{t("cat." + CATEGORY_META[r.b.category].label, CATEGORY_META[r.b.category].label)}</span>
             </div>
           ))}
         </div>
