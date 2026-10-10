@@ -506,3 +506,8 @@ h1, h2, h3, h4, h5, h6 {
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 .hide-amounts .tnum { filter: blur(7px); }
+
+/* No visible scrollbars anywhere; scrolling still works. */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }
+[data-slot="scroll-area-scrollbar"] { display: none !important; }

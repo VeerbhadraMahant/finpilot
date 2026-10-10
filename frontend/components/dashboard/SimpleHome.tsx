@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Link2, Mic, Volume2 } from "lucide-react";
+import { Check, Link2, Mic, Plus, Volume2 } from "lucide-react";
 import { Button } from "@/components/shadcn/button";
+import { api } from "@/lib/api";
+import { useUserId } from "@/lib/hooks";
 import { formatCurrency } from "@/lib/format";
 import { openAssistant } from "@/lib/copilotBus";
 import { useT } from "@/lib/i18n";
@@ -23,8 +26,26 @@ function Bar({ label, amount, max, tone }: { label: string; amount: number; max:
 }
 
 /** The dashboard for people who read little: three big numbers, one picture, and a button to just talk. */
-export function SimpleHome({ name, income, spent, connected, onFullView }: { name?: string; income: number; spent: number; connected: boolean; onFullView: () => void }) {
+export function SimpleHome({ name, income, spent, connected, onFullView, onSaved }: { name?: string; income: number; spent: number; connected: boolean; onFullView: () => void; onSaved?: () => void }) {
   const { t } = useT();
+  const userId = useUserId();
+  const [item, setItem] = useState("");
+  const [amount, setAmount] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "saved" | "error">("idle");
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    setState("busy");
+    try {
+      await api.addExpense(userId, item, Number(amount));
+      setItem("");
+      setAmount("");
+      setState("saved");
+      onSaved?.();
+    } catch {
+      setState("error");
+    }
+  }
   const left = income - spent;
   const max = Math.max(income, spent);
 
@@ -43,6 +64,18 @@ export function SimpleHome({ name, income, spent, connected, onFullView }: { nam
         <Mic className="size-7" /> {t("home.talk")}
       </Button>
       <p className="-mt-3 text-center text-sm text-graphite">{t("home.talk_hint")}</p>
+
+      <form onSubmit={add} className="flex flex-col gap-3 rounded-3xl bg-white p-5 shadow-sm">
+        <p className="flex items-center gap-2 text-lg font-semibold text-ink"><Plus className="size-5" /> {t("home.spent")}</p>
+        <input value={item} onChange={(e) => { setItem(e.target.value); setState("idle"); }} placeholder={t("home.item")} required
+          className="h-14 rounded-2xl border border-mist bg-paper px-4 text-lg text-ink outline-none focus:border-ink" />
+        <input value={amount} onChange={(e) => { setAmount(e.target.value); setState("idle"); }} placeholder={t("home.amount")} required inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
+          className="h-14 rounded-2xl border border-mist bg-paper px-4 text-lg text-ink outline-none focus:border-ink" />
+        <Button type="submit" disabled={state === "busy"} className="h-auto gap-2 rounded-2xl bg-ink py-4 text-lg text-white">
+          {state === "saved" ? <><Check className="size-5" /> {t("home.saved")}</> : t("home.save")}
+        </Button>
+        {state === "error" && <p role="alert" className="text-sm text-rose-600">!</p>}
+      </form>
 
       {connected ? (
         <section className="flex flex-col gap-5 rounded-3xl bg-white p-5 shadow-sm sm:p-6">

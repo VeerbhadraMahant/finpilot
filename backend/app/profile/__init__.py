@@ -4,7 +4,7 @@ from __future__ import annotations
 LEVELS = ("basic", "standard", "deep")
 
 
-ROLES = ["Student", "Farmer", "Business owner", "Small vendor (shop, cart, stall)", "Salaried employee", "Freelancer", "Homemaker", "Retired", "Other"]
+ROLES = ["Student", "Farmer", "Business owner", "Small vendor (shop, cart, stall)", "Salaried employee", "Finance professional / analyst", "Freelancer", "Homemaker", "Retired", "Other"]
 
 
 COMFORT = ["I prefer to talk, not read", "I can read a little", "I am comfortable"]

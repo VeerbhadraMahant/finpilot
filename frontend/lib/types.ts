@@ -789,3 +789,6 @@ export interface SecurityGraph {
 export interface DataSource { id: string; name: string; detail: string | null; records: number; preview: unknown[]; disconnectable: boolean }
 export interface AccessEntry { when: string; event: string; method: string; path: string; detail: string; status: number }
 export interface MyData { sources: DataSource[]; access_log: AccessEntry[] }
+
+export interface OcrTxn { date: string; description: string; amount: number }
+export interface OcrPreview { transactions: OcrTxn[]; removed: Record<string, number> }

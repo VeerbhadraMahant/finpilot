@@ -35,3 +35,19 @@ export function useSimpleMode(userId: string): [boolean, (on: boolean) => void] 
   }, []);
   return [simple, set];
 }
+
+const ANALYST = "finpilot_analyst"; // "1" | "0" | absent = decide from the questionnaire role
+
+/** Analyst view = the standard dashboard plus a dense numbers-first block. On for finance professionals; anyone can switch it. */
+export function useAnalystMode(userId: string): [boolean, (on: boolean) => void] {
+  const profile = useAsync(useCallback(() => api.profile(userId), [userId]), [userId]);
+  const override = useSyncExternalStore((cb) => (listeners.add(cb), () => void listeners.delete(cb)), () => read(ANALYST), () => null);
+  const analyst = override ? override === "1" : profile.data?.answers.role === "Finance professional / analyst";
+  const set = useCallback((on: boolean) => {
+    try {
+      localStorage.setItem(ANALYST, on ? "1" : "0");
+    } catch {}
+    listeners.forEach((l) => l());
+  }, []);
+  return [analyst, set];
+}

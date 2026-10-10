@@ -17,6 +17,8 @@ import type {
   CreateInviteRequest,
   DashboardSnapshot,
   DocumentInfo,
+  OcrPreview,
+  OcrTxn,
   Goal,
   GoalProgress,
   FinancialSecurity,
@@ -326,6 +328,26 @@ export const api = {
     const res = await fetch(`${API_URL}/api/documents/${userId}`, { method: "POST", headers: await authHeader(), body });
     clearApiCache();
     if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+    return res.json();
+  },
+  // Statement / passbook photo -> OCR -> personal data removed -> preview; nothing is saved until importOcr
+  extractStatement: async (userId: string, file: File): Promise<OcrPreview> => {
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch(`${API_URL}/api/ocr/extract/${userId}`, { method: "POST", headers: await authHeader(), body });
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Upload failed: ${res.status}`);
+    return res.json();
+  },
+  importOcr: (userId: string, transactions: OcrTxn[]) =>
+    apiFetch<{ imported: number; skipped_repeats: number }>(`/api/ocr/import/${userId}`, { method: "POST", body: JSON.stringify({ transactions }) }).finally(clearApiCache),
+  // One line of spending (item + amount); the backend files it under a category
+  addExpense: async (userId: string, item: string, amount: number) => {
+    const body = new FormData();
+    body.append("item", item);
+    body.append("amount", String(amount));
+    const res = await fetch(`${API_URL}/api/expenses/${userId}`, { method: "POST", headers: await authHeader(), body });
+    clearApiCache();
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? `Could not save: ${res.status}`);
     return res.json();
   },
   deleteDocument: (userId: string, id: string) =>
