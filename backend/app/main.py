@@ -33,8 +33,8 @@ _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    if os.getenv("VERCEL"):
-        # Seed the demo personas on fresh deploy / serverless startup if missing.
+    # Seed + warm the demo personas on every start (fresh deploy, serverless cold start, local emulator), without blocking boot.
+    def _prepare_demo() -> None:
         try:
             from app.ingest.seed import seed_if_empty
 
@@ -42,6 +42,10 @@ async def lifespan(_: FastAPI):
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning("Demo persona seeding skipped: %s", exc)
+
+    import threading
+
+    threading.Thread(target=_prepare_demo, daemon=True).start()
     yield
 
 

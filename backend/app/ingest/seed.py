@@ -10,6 +10,9 @@ duplicates.
 from __future__ import annotations
 
 import hashlib
+import logging
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 
 from app.core import store
@@ -90,11 +93,45 @@ def seed_all() -> None:
     print("Seeded demo household: 'Priya & Partner Family' (Members: Priya, Arjun; Pending: Rohan)")
 
 
+_ensure_lock = threading.RLock()  # re-entrant: ensure_demo_seeded calls seed_if_empty
+_checked_at = 0.0
+_RECHECK_SECONDS = 30.0
+
+
+def _demo_missing() -> bool:
+    return any(store.first(AccountRow, user_id=uid) is None for uid in PERSONA_CONFIGS)
+
+
+def warm_demo_caches() -> None:
+    """Build the dashboard snapshot for each persona now so the first click in a demo is instant (it caches itself)."""
+    from app.ingest.snapshot import build_dashboard_snapshot
+
+    for uid in PERSONA_CONFIGS:
+        try:
+            build_dashboard_snapshot(uid)
+        except Exception as exc:  # noqa: BLE001 - warming is an extra, never block the demo
+            logging.getLogger(__name__).warning("warm %s failed: %s", uid, exc)
+
+
 def seed_if_empty() -> None:
-    """Seed the demo personas only if they're missing (fresh/ephemeral DB,
-    e.g. a serverless cold start). Cheap no-op otherwise."""
-    if store.first(AccountRow, user_id="demo-priya") is None:
-        seed_all()
+    """Seed the demo personas if any is missing (fresh/ephemeral DB, a wiped emulator, a serverless cold start),
+    then warm their caches. Cheap no-op otherwise."""
+    with _ensure_lock:  # the startup thread and a first request must not seed at the same time
+        if _demo_missing():
+            seed_all()
+            warm_demo_caches()
+
+
+def ensure_demo_seeded() -> None:
+    """Called when a demo persona is requested: self-heals missing demo data, checking at most every 30 s per process."""
+    global _checked_at
+    if time.monotonic() - _checked_at < _RECHECK_SECONDS:
+        return
+    with _ensure_lock:
+        if time.monotonic() - _checked_at < _RECHECK_SECONDS:
+            return
+        seed_if_empty()
+        _checked_at = time.monotonic()
 
 
 if __name__ == "__main__":
